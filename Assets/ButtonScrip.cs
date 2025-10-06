@@ -15,7 +15,7 @@ public class ButtonScrip : MonoBehaviour
     // Update is called once per frame
     public void Change()
     {
-        button.transform.localScale *=  change ? 0.5f : 2f;
+        button.transform.localScale *=  change ? 0.25f : 4f;
         change = !change;
     }
 }
