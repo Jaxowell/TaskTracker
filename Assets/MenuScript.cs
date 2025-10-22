@@ -19,8 +19,9 @@ public class MenuScript : MonoBehaviour
     [SerializeField] GameObject WorkerMenu;
 
 
+    [SerializeField] WorkerMenu workerMenu;
 
-
+    public int activeUserId = 0;
     public DBScript db = new DBScript();
     [SerializeField] TMP_InputField loginMenu;
     [SerializeField] TMP_InputField passwordMenu;
@@ -54,6 +55,7 @@ public class MenuScript : MonoBehaviour
             bool res = db.VerifyLogin(loginMenu.text, passwordMenu.text);
             if (res)
             {
+                activeUserId = db.GetUserIdByName(loginMenu.text);
                 ChangeMenu(db.GetUserRole(loginMenu.text)+1);
             }
             else
@@ -61,7 +63,7 @@ public class MenuScript : MonoBehaviour
                 passwordMenu.text = "";
                 passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Неверные пароль\n или логин!";
             }
-            Debug.Log(res);
+            //Debug.Log(res);
         }
         //return res;
     }
@@ -98,6 +100,7 @@ public class MenuScript : MonoBehaviour
                 break;
             case 4:
                 WorkerMenu.SetActive(true);
+                workerMenu.LoadMenu();
                 break;
         }
         activeMenuId = newId;
