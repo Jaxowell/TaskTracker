@@ -15,6 +15,8 @@ public class MasterMenuScript : MonoBehaviour
 
     [SerializeField] MenuScript Mscript;
 
+    [SerializeField] TextMeshPro stat;
+
     [SerializeField] TMP_InputField titleTask;
     [SerializeField] TMP_InputField descriptionTask;
     [SerializeField] TMP_InputField titleEpic;
@@ -86,6 +88,11 @@ public class MasterMenuScript : MonoBehaviour
 
         }
     }
+    void LoadStat()
+    {
+        int masterId = Mscript.activeUserId;
+        //бежим по таскам, потом по эпикам и запоминаем всех у кого master_id= masterId
+    }
     void LoadWorkers()
     {
         List<string> workers=db.GetUserEmailsByRole(3);
@@ -124,6 +131,7 @@ public class MasterMenuScript : MonoBehaviour
                 CreateEpicMenu.SetActive(true);
                 break;
             case 3:
+                LoadStat();
                 StatisticMenu.SetActive(true);
                 break;
         }
