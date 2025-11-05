@@ -11,7 +11,9 @@ public class MasterMenuScript : MonoBehaviour
     [SerializeField] GameObject MainMenu;
     [SerializeField] GameObject CreateTaskMenu;
     [SerializeField] GameObject CreateEpicMenu;
+    [SerializeField] GameObject StatisticMenu;
 
+    [SerializeField] MenuScript Mscript;
 
     [SerializeField] TMP_InputField titleTask;
     [SerializeField] TMP_InputField descriptionTask;
@@ -25,6 +27,8 @@ public class MasterMenuScript : MonoBehaviour
     {
         LoadWorkers();
         CreateTaskMenu.SetActive(false);
+        CreateEpicMenu.SetActive(false);
+        StatisticMenu.SetActive(false);
         MainMenu.SetActive(true);
     }
     public void AddTask()
@@ -48,7 +52,8 @@ public class MasterMenuScript : MonoBehaviour
         int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text);
         if (!inputProblem)
         {
-            db.AddTask(titleTask.text, descriptionTask.text, workerId);
+            int masterId = Mscript.activeUserId;
+            db.AddTask(titleTask.text, descriptionTask.text, masterId, workerId);
             titleTask.text = "";
             descriptionTask.text = "";
             WorkerDropDown.value = 0;
@@ -61,18 +66,20 @@ public class MasterMenuScript : MonoBehaviour
         bool inputProblem = false;
         if (titleEpic.text == "")
         {
-            titleTask.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите название!";
+            titleEpic.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите название!";
             inputProblem = true;
         }
         if (descriptionEpic.text == "")
         {
-            descriptionTask.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
+            descriptionEpic.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
             inputProblem = true;
         }
         //int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text);
         if (!inputProblem)
         {
-            //db.AddTask(titleTask.text, descriptionTask.text, workerId);
+            int masterId =Mscript.activeUserId;
+            Debug.Log("Сейчас активный:"+masterId);
+            db.AddEpic(titleEpic.text, descriptionEpic.text, masterId);//, workerId);
             titleEpic.text = "";
             descriptionEpic.text = "";
             //passwordMenu.text = "";
@@ -97,7 +104,10 @@ public class MasterMenuScript : MonoBehaviour
                 CreateTaskMenu.SetActive(false);
                 break;
             case 2:
-                CreateTaskMenu.SetActive(false);
+                CreateEpicMenu.SetActive(false);
+                break;
+            case 3:
+                StatisticMenu.SetActive(false);
                 break;
         }
 
@@ -109,6 +119,12 @@ public class MasterMenuScript : MonoBehaviour
                 break;
             case 1:
                 CreateTaskMenu.SetActive(true);
+                break;
+            case 2:
+                CreateEpicMenu.SetActive(true);
+                break;
+            case 3:
+                StatisticMenu.SetActive(true);
                 break;
         }
         activeMenuId = newId;

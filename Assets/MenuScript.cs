@@ -21,7 +21,7 @@ public class MenuScript : MonoBehaviour
 
     [SerializeField] WorkerMenu workerMenu;
 
-    public int activeUserId = 0;
+    public int activeUserId = 5000;
     public DBScript db = new DBScript();
     [SerializeField] TMP_InputField loginMenu;
     [SerializeField] TMP_InputField passwordMenu;
@@ -56,6 +56,7 @@ public class MenuScript : MonoBehaviour
             if (res)
             {
                 activeUserId = db.GetUserIdByName(loginMenu.text);
+                Debug.Log("Сейчас активный:" + loginMenu.text+" с id "+activeUserId);
                 ChangeMenu(db.GetUserRole(loginMenu.text)+1);
             }
             else
@@ -69,7 +70,7 @@ public class MenuScript : MonoBehaviour
     }
     public void ChangeMenu(int newId)
     {
-        Debug.Log(activeMenuId+" --> "+newId);
+        Debug.Log("В главном меню "+activeMenuId+" --> "+newId);
         switch (activeMenuId)
         {
             case 1:

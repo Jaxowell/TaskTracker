@@ -62,18 +62,19 @@ public class DBScript// : MonoBehaviour
             }
         }
     }
-    public void AddTask(string title, string description, int workerId)
+    public void AddTask(string title, string description, int masterid ,int workerId)
     {
         using (var connection = new SqliteConnection(filePath))
         {
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO task (title, description, status_id, user_task_id) VALUES" +
-                " (@title, @description, @status_id, @user_task_id)";
+            command.CommandText = "INSERT INTO task (title, description, status_id, master_id, user_task_id) VALUES" +
+                " (@title, @description, @status_id, @master_Id, @user_task_id)";
             command.Parameters.AddWithValue("@title", title);
             command.Parameters.AddWithValue("@description", description);
             command.Parameters.AddWithValue("@status_id", 1);
+            command.Parameters.AddWithValue("@master_id", masterid);
             command.Parameters.AddWithValue("@user_task_id", workerId);
             //command.Parameters.AddWithValue("@chat_task_id", 1);
 
@@ -88,29 +89,30 @@ public class DBScript// : MonoBehaviour
             }
         }
     }
-    public void AddEpic(string title, string description)
+    public void AddEpic(string title, string description, int masterId)
     {
+        Debug.Log(" начинаем создавать эпик");
         using (var connection = new SqliteConnection(filePath))
         {
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO epic (title, description, status_id, user_task_id) VALUES" +
-                " (@title, @description, @status_id, @user_task_id)";
+            command.CommandText = "INSERT INTO epic (title, description, status_id, master_id,  chat_epic_id) VALUES" +
+                " (@title, @description,  @status_id, @master_id, @chat_epic_id)";
             command.Parameters.AddWithValue("@title", title);
             command.Parameters.AddWithValue("@description", description);
             command.Parameters.AddWithValue("@status_id", 1);
-            //command.Parameters.AddWithValue("@user_task_id", workerId);
-            //command.Parameters.AddWithValue("@chat_task_id", 1);
+            command.Parameters.AddWithValue("@master_id", masterId);
+            command.Parameters.AddWithValue("@chat_epic_id", 1);
 
             try
             {
                 command.ExecuteNonQuery();
-                Debug.Log("Задача добавлена: " + title);
+                Debug.Log("Эпик добавлен: " + title);
             }
             catch (SqliteException ex)
             {
-                Debug.LogError("Ошибка добавления задачи: " + ex.Message);
+                Debug.LogError("Ошибка добавления эпика: " + ex.Message);
             }
         }
     }
@@ -163,7 +165,7 @@ public class DBScript// : MonoBehaviour
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT idUser FROM users WHERE email = @name";
+            command.CommandText = "SELECT idUser FROM users WHERE name = @name";
             command.Parameters.AddWithValue("@name", name);
 
             int userId = 0;

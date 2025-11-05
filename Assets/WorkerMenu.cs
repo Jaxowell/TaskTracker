@@ -5,8 +5,10 @@ using UnityEngine;
 
 public class WorkerMenu : MonoBehaviour
 {
+
     //public DBScript db = new DBScript();
     [SerializeField] MenuScript Mscript;
+
     [SerializeField] GameObject TaskLayout;
     [SerializeField] GameObject TaskPrefab;
     List<GameObject> taskLists = new List<GameObject>();
