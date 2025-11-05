@@ -15,7 +15,7 @@ public class MasterMenuScript : MonoBehaviour
 
     [SerializeField] MenuScript Mscript;
 
-    [SerializeField] TextMeshPro stat;
+    [SerializeField] TextMeshProUGUI stat;
 
     [SerializeField] TMP_InputField titleTask;
     [SerializeField] TMP_InputField descriptionTask;
@@ -91,7 +91,19 @@ public class MasterMenuScript : MonoBehaviour
     void LoadStat()
     {
         int masterId = Mscript.activeUserId;
+        string answer = "";
+        List<string> tasks = db.AIGetTaskByMaster(masterId);
+        for (int i = 0; i < tasks.Count; i+=2)
+        {
+            answer += "Задача " + tasks[i] + " выполняет " + tasks[i+1] +";\n";
+        }
+        List<string> epic = db.GetEpicByMaster(masterId);
+        for (int i = 0; i < epic.Count; i++)
+        {
+            answer += "Эпик " + epic[i] + ";\n";
+        }
         //бежим по таскам, потом по эпикам и запоминаем всех у кого master_id= masterId
+        stat.text = answer;
     }
     void LoadWorkers()
     {

@@ -180,7 +180,7 @@ public class DBScript// : MonoBehaviour
         }
     }
 
-    public List<string> GetTaskByUser(int userId)
+    public List<string> GetTaskByMaster(int masterId)
     {
         List<string> tasks = new List<string>();
         // Строка подключения к базе данных
@@ -190,8 +190,8 @@ public class DBScript// : MonoBehaviour
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT title FROM task WHERE user_task_id = @user_id";
-            command.Parameters.AddWithValue("@user_id", userId);
+            command.CommandText = "SELECT title FROM task WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
 
             using (var reader = command.ExecuteReader())
             {
@@ -206,6 +206,73 @@ public class DBScript// : MonoBehaviour
             }
         }
         return tasks;
+    }
+    public List<string> GetEpicByMaster(int masterId)
+    {
+        List<string> epic = new List<string>();
+        // Строка подключения к базе данных
+
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT title FROM epic WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    // Добавляем email в список, если он не NULL
+                    if (!reader.IsDBNull(0))
+                    {
+                        epic.Add(reader.GetString(0));
+                    }
+                }
+            }
+        }
+        return epic;
+    }
+    public List<string> AIGetTaskByMaster(int masterId)
+    {
+        List<string> task = new List<string>();
+
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+            SELECT e.title, u.email 
+            FROM task e 
+            LEFT JOIN users u ON e.user_task_id = u.idUser 
+            WHERE e.master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    // Добавляем название эпика
+                    if (!reader.IsDBNull(0))
+                    {
+                        task.Add(reader.GetString(0));
+                    }
+
+                    // Добавляем email пользователя (может быть NULL)
+                    if (!reader.IsDBNull(1))
+                    {
+                        task.Add(reader.GetString(1));
+                    }
+                    else
+                    {
+                        task.Add("No email"); // или пустая строка, если email отсутствует
+                    }
+                }
+            }
+        }
+        return task;
     }
 
     public List<string> GetUserEmailsByRole(int roleId)

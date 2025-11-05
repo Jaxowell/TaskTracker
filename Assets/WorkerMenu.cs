@@ -20,6 +20,7 @@ public class WorkerMenu : MonoBehaviour
     }
     void FullTaskLayout(int id)
     {
+        /*
         List<string> tasks = Mscript.db.GetTaskByUser(id);
         for(int i = 0; i<tasks.Count; i++)
         {
@@ -30,6 +31,7 @@ public class WorkerMenu : MonoBehaviour
             taskLists.Add(taskButton);
             Debug.Log(tasks[i]);
         }
+        */
     }
 
 }
