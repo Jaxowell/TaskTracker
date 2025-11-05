@@ -30,7 +30,7 @@ public class DBScript// : MonoBehaviour
             {
                 if (reader.Read())
                 {
-                    hash = reader.GetString(0);// Сравнение паролей
+                    hash = reader.GetString(0);// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 }
             }
             //Debug.Log(password+" "+hash);
@@ -54,11 +54,11 @@ public class DBScript// : MonoBehaviour
             try
             {
                 command.ExecuteNonQuery();
-                Debug.Log("Пользователь добавлен: " + name);
+                Debug.Log("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: " + name);
             }
             catch (SqliteException ex)
             {
-                Debug.LogError("Ошибка добавления пользователя: " + ex.Message);
+                Debug.LogError("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: " + ex.Message);
             }
         }
     }
@@ -80,11 +80,11 @@ public class DBScript// : MonoBehaviour
             try
             {
                 command.ExecuteNonQuery();
-                Debug.Log("Задача добавлена: " + title);
+                Debug.Log("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: " + title);
             }
             catch (SqliteException ex)
             {
-                Debug.LogError("Ошибка добавления задачи: " + ex.Message);
+                Debug.LogError("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ: " + ex.Message);
             }
         }
     }
@@ -103,7 +103,7 @@ public class DBScript// : MonoBehaviour
             {
                 if (reader.Read())
                 {
-                    roleId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
+                    roleId = reader.GetInt32(0);//.GetString(0);// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 }
             }
             return roleId;
@@ -124,7 +124,7 @@ public class DBScript// : MonoBehaviour
             {
                 if (reader.Read())
                 {
-                    userId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
+                    userId = reader.GetInt32(0);//.GetString(0);// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 }
             }
             return userId;
@@ -137,7 +137,7 @@ public class DBScript// : MonoBehaviour
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT idUser FROM users WHERE email = @name";
+            command.CommandText = "SELECT idUser FROM users WHERE name = @name";
             command.Parameters.AddWithValue("@name", name);
 
             int userId = 0;
@@ -145,7 +145,7 @@ public class DBScript// : MonoBehaviour
             {
                 if (reader.Read())
                 {
-                    userId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
+                    userId = reader.GetInt32(0);//.GetString(0);// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 }
             }
             return userId;
@@ -155,7 +155,7 @@ public class DBScript// : MonoBehaviour
     public List<string> GetTaskByUser(int userId)
     {
         List<string> tasks = new List<string>();
-        // Строка подключения к базе данных
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 
         using (var connection = new SqliteConnection(filePath))
         {
@@ -169,7 +169,7 @@ public class DBScript// : MonoBehaviour
             {
                 while (reader.Read())
                 {
-                    // Добавляем email в список, если он не NULL
+                    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ email пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ NULL
                     if (!reader.IsDBNull(0))
                     {
                         tasks.Add(reader.GetString(0));
@@ -183,21 +183,21 @@ public class DBScript// : MonoBehaviour
     public List<string> GetUserEmailsByRole(int roleId)
     {
         List<string> emails = new List<string>();
-        // Строка подключения к базе данных
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 
         using (var connection = new SqliteConnection(filePath))
         {
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT email FROM users WHERE role_id = 3";
+            command.CommandText = "SELECT email FROM users WHERE role_id = @role_id";
             command.Parameters.AddWithValue("@role_id", roleId);
 
             using (var reader = command.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    // Добавляем email в список, если он не NULL
+                    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ email пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ NULL
                     if (!reader.IsDBNull(0))
                     {
                         emails.Add(reader.GetString(0));
@@ -207,5 +207,28 @@ public class DBScript// : MonoBehaviour
         }
 
         return emails;
+    }
+
+    public string GetUserNameById(int id)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM users WHERE idUser = @id";
+            command.Parameters.AddWithValue("@id", id);
+
+            string userName = string.Empty;
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    if (!reader.IsDBNull(0))
+                        userName = reader.GetString(0);
+                }
+            }
+            return userName;
+        }
     }
 }

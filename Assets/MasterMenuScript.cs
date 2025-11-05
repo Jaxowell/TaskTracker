@@ -29,17 +29,17 @@ public class MasterMenuScript : MonoBehaviour
         bool inputProblem = false;
         if (titleMenu.text == "")
         {
-            titleMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите название!";
+            titleMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!";
             inputProblem = true;
         }
         if (descriptionMenu.text == "")
         {
-            descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
+            descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!";
             inputProblem = true;
         }
         if(WorkerDropDown.value==0)
         {
-            //descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
+            //descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!";
             inputProblem = true;
         }
         int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text); 
@@ -57,7 +57,7 @@ public class MasterMenuScript : MonoBehaviour
     {
         List<string> workers=db.GetUserEmailsByRole(3);
         WorkerDropDown.AddOptions(workers);
-        //Debug.Log("Загрузили!");
+        //Debug.Log("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!");
     }
     public void ChangeMenu(int newId)
     {
@@ -83,5 +83,11 @@ public class MasterMenuScript : MonoBehaviour
                 break;
         }
         activeMenuId = newId;
+    }
+
+    public void OpenChat()
+    {
+        if (ChatScript.Instance != null)
+            ChatScript.Instance.OpenChat();
     }
 }

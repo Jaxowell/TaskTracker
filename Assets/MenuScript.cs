@@ -42,12 +42,12 @@ public class MenuScript : MonoBehaviour
         bool inputProblem = false;
         if (loginMenu.text == "")
         {
-            loginMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите логин!";
+            loginMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ!";
             inputProblem = true;
         }
         if (passwordMenu.text == "")
         {
-            passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите пароль!";
+            passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ!";
             inputProblem = true;
         }
         if(!inputProblem)
@@ -61,7 +61,7 @@ public class MenuScript : MonoBehaviour
             else
             {
                 passwordMenu.text = "";
-                passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Неверные пароль\n или логин!";
+                passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ\n пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ!";
             }
             //Debug.Log(res);
         }
@@ -69,7 +69,16 @@ public class MenuScript : MonoBehaviour
     }
     public void ChangeMenu(int newId)
     {
-        Debug.Log(activeMenuId+" --> "+newId);
+        Debug.Log($"ChangeMenu: {activeMenuId} --> {newId}");
+        
+        // РџСЂРѕРІРµСЂСЏРµРј СЃСЃС‹Р»РєРё РЅР° РјРµРЅСЋ
+        if (SignInMenu == null || AdminMenu == null || MasterMenu == null || WorkerMenu == null)
+        {
+            Debug.LogError("One or more menu references are missing in MenuScript!");
+            return;
+        }
+
+        Debug.Log($"Deactivating menu {activeMenuId}");
         switch (activeMenuId)
         {
             case 1:
