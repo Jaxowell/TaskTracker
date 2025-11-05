@@ -88,6 +88,32 @@ public class DBScript// : MonoBehaviour
             }
         }
     }
+    public void AddEpic(string title, string description)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO epic (title, description, status_id, user_task_id) VALUES" +
+                " (@title, @description, @status_id, @user_task_id)";
+            command.Parameters.AddWithValue("@title", title);
+            command.Parameters.AddWithValue("@description", description);
+            command.Parameters.AddWithValue("@status_id", 1);
+            //command.Parameters.AddWithValue("@user_task_id", workerId);
+            //command.Parameters.AddWithValue("@chat_task_id", 1);
+
+            try
+            {
+                command.ExecuteNonQuery();
+                Debug.Log("Задача добавлена: " + title);
+            }
+            catch (SqliteException ex)
+            {
+                Debug.LogError("Ошибка добавления задачи: " + ex.Message);
+            }
+        }
+    }
     public int GetUserRole(string name)
     {
         using (var connection = new SqliteConnection(filePath))

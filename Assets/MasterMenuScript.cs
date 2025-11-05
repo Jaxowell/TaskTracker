@@ -10,10 +10,13 @@ public class MasterMenuScript : MonoBehaviour
     public DBScript db = new DBScript();
     [SerializeField] GameObject MainMenu;
     [SerializeField] GameObject CreateTaskMenu;
+    [SerializeField] GameObject CreateEpicMenu;
 
 
-    [SerializeField] TMP_InputField titleMenu;
-    [SerializeField] TMP_InputField descriptionMenu;
+    [SerializeField] TMP_InputField titleTask;
+    [SerializeField] TMP_InputField descriptionTask;
+    [SerializeField] TMP_InputField titleEpic;
+    [SerializeField] TMP_InputField descriptionEpic;
     [SerializeField] TMP_Dropdown WorkerDropDown;
     //[SerializeField] MenuScript menuScript;
 
@@ -27,28 +30,51 @@ public class MasterMenuScript : MonoBehaviour
     public void AddTask()
     {
         bool inputProblem = false;
-        if (titleMenu.text == "")
+        if (titleTask.text == "")
         {
-            titleMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите название!";
+            titleTask.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите название!";
             inputProblem = true;
         }
-        if (descriptionMenu.text == "")
+        if (descriptionTask.text == "")
         {
-            descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
+            descriptionTask.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
             inputProblem = true;
         }
-        if(WorkerDropDown.value==0)
+        if (WorkerDropDown.value == 0)
         {
             //descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
             inputProblem = true;
         }
-        int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text); 
+        int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text);
         if (!inputProblem)
         {
-            db.AddTask(titleMenu.text,descriptionMenu.text,workerId);
-            titleMenu.text = "";
-            descriptionMenu.text = "";
+            db.AddTask(titleTask.text, descriptionTask.text, workerId);
+            titleTask.text = "";
+            descriptionTask.text = "";
             WorkerDropDown.value = 0;
+            //passwordMenu.text = "";
+
+        }
+    }
+    public void AddEpic()
+    {
+        bool inputProblem = false;
+        if (titleEpic.text == "")
+        {
+            titleTask.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите название!";
+            inputProblem = true;
+        }
+        if (descriptionEpic.text == "")
+        {
+            descriptionTask.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
+            inputProblem = true;
+        }
+        //int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text);
+        if (!inputProblem)
+        {
+            //db.AddTask(titleTask.text, descriptionTask.text, workerId);
+            titleEpic.text = "";
+            descriptionEpic.text = "";
             //passwordMenu.text = "";
 
         }
@@ -68,6 +94,9 @@ public class MasterMenuScript : MonoBehaviour
                 MainMenu.SetActive(false);
                 break;
             case 1:
+                CreateTaskMenu.SetActive(false);
+                break;
+            case 2:
                 CreateTaskMenu.SetActive(false);
                 break;
         }
