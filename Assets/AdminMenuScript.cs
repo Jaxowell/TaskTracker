@@ -17,17 +17,17 @@ public class AdminMenuScript : MonoBehaviour
         bool inputProblem = false;
         if (loginMenu.text == "")
         {
-            loginMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите логин!";
+            loginMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ!";
             inputProblem = true;
         }
         if (passwordMenu.text == "")
         {
-            passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите пароль!";
+            passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ!";
             inputProblem = true;
         }
         if (loginMenu.text == "")
         {
-            emailMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите почту!";
+            emailMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ!";
             inputProblem = true;
         }
         int roleId = roleMenu.value+1;
@@ -39,5 +39,19 @@ public class AdminMenuScript : MonoBehaviour
             passwordMenu.text = "";
 
         }
+    }
+    public void OpenAdminChat()
+    {
+        if (ChatScript.Instance != null)
+        {
+            int myId = menuScript.activeUserId;
+            
+            ChatScript.Instance.OpenChat(0, myId);
+        }
+        else
+        {
+            Debug.LogError("ChatScript РЅРµ РЅР°Р№РґРµРЅ!");
+        }
+        
     }
 }

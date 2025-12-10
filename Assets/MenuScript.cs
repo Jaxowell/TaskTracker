@@ -52,12 +52,12 @@ public class MenuScript : MonoBehaviour
         }
         if(!inputProblem)
         {
-            bool res = db.VerifyLogin(loginMenu.text, passwordMenu.text);
-            if (res)
+            var loginResult = db.TryLoginFull(loginMenu.text, passwordMenu.text);
+            if (loginResult.Success)
             {
-                activeUserId = db.GetUserIdByName(loginMenu.text);
-                ChangeMenu(db.GetUserRole(loginMenu.text)+1);
-            }
+                activeUserId = loginResult.Id;
+                ChangeMenu(loginResult.Role + 1); // Твоя логика с +1
+            }     
             else
             {
                 passwordMenu.text = "";
@@ -71,35 +71,38 @@ public class MenuScript : MonoBehaviour
     {
         Debug.Log($"ChangeMenu: {activeMenuId} --> {newId}");
         
-        // Проверяем ссылки на меню
+        // Если ссылки слетели - ищем их заново (защита от дурака)
         if (SignInMenu == null || AdminMenu == null || MasterMenu == null || WorkerMenu == null)
         {
-            Debug.LogError("One or more menu references are missing in MenuScript!");
+            Debug.LogError("Ссылки на меню не назначены в MenuScript!");
             return;
         }
 
-        Debug.Log($"Deactivating menu {activeMenuId}");
+        // 1. ОТКЛЮЧАЕМ ТЕКУЩЕЕ (ИЛИ ВСЕ СРАЗУ ДЛЯ НАДЕЖНОСТИ)
+        // Вместо switch по id, который может глючить, просто выключим всё лишнее
+        if (newId != 1) SignInMenu.SetActive(false);
+        if (newId != 2) AdminMenu.SetActive(false);
+        if (newId != 3) MasterMenu.SetActive(false);
+        if (newId != 4) WorkerMenu.SetActive(false);
+
+        // Дополнительно выключаем то, что считалось активным (если вдруг логика выше пропустила)
         switch (activeMenuId)
         {
-            case 1:
-                SignInMenu.SetActive(false);
-                break;
-            case 2:
-                AdminMenu.SetActive(false);
-                break;
-            case 3:
-                MasterMenu.SetActive(false);
-                break;
-            case 4:
-                WorkerMenu.SetActive(false);
-                break;
+            case 1: SignInMenu.SetActive(false); break;
+            case 2: AdminMenu.SetActive(false); break;
+            case 3: MasterMenu.SetActive(false); break;
+            case 4: WorkerMenu.SetActive(false); break;
+            // Case 0 ничего не делает, и это нормально теперь
         }
 
-
+        // 2. ВКЛЮЧАЕМ НОВОЕ
         switch (newId)
         {
             case 1:
                 SignInMenu.SetActive(true);
+                // Очищаем поля ввода при возврате в логин
+                if(loginMenu != null) loginMenu.text = "";
+                if(passwordMenu != null) passwordMenu.text = "";
                 break;
             case 2:
                 AdminMenu.SetActive(true);
@@ -109,9 +112,11 @@ public class MenuScript : MonoBehaviour
                 break;
             case 4:
                 WorkerMenu.SetActive(true);
-                workerMenu.LoadMenu();
+                if(workerMenu != null) workerMenu.LoadMenu();
                 break;
         }
+        
+        // Обновляем ID
         activeMenuId = newId;
     }
 }

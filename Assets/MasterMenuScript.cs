@@ -8,14 +8,16 @@ public class MasterMenuScript : MonoBehaviour
 {
     int activeMenuId = 0;
     public DBScript db = new DBScript();
+    
     [SerializeField] GameObject MainMenu;
     [SerializeField] GameObject CreateTaskMenu;
-
 
     [SerializeField] TMP_InputField titleMenu;
     [SerializeField] TMP_InputField descriptionMenu;
     [SerializeField] TMP_Dropdown WorkerDropDown;
-    //[SerializeField] MenuScript menuScript;
+    
+    // Обратите внимание: тут переменная называется menuScript
+    [SerializeField] MenuScript menuScript; 
 
     // Start is called before the first frame update
     public void Start()
@@ -24,41 +26,48 @@ public class MasterMenuScript : MonoBehaviour
         CreateTaskMenu.SetActive(false);
         MainMenu.SetActive(true);
     }
+
     public void AddTask()
     {
         bool inputProblem = false;
         if (titleMenu.text == "")
         {
-            titleMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
+            if(titleMenu.placeholder.GetComponent<TextMeshProUGUI>())
+                titleMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите название!";
             inputProblem = true;
         }
         if (descriptionMenu.text == "")
         {
-            descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
+            if(descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>())
+                descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
             inputProblem = true;
         }
-        if(WorkerDropDown.value==0)
+        if(WorkerDropDown.value == 0) // Обычно 0 элемент это "Выберите...", но зависит от реализации
         {
-            //descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
+             // Тут можно добавить проверку, если первый элемент пустой
         }
-        int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text); 
-        if (!inputProblem)
-        {
-            db.AddTask(titleMenu.text,descriptionMenu.text,workerId);
-            titleMenu.text = "";
-            descriptionMenu.text = "";
-            WorkerDropDown.value = 0;
-            //passwordMenu.text = "";
 
+        // Защита от пустого списка
+        if (WorkerDropDown.options.Count > 0)
+        {
+            int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text); 
+            if (!inputProblem)
+            {
+                db.AddTask(titleMenu.text, descriptionMenu.text, workerId);
+                titleMenu.text = "";
+                descriptionMenu.text = "";
+                WorkerDropDown.value = 0;
+            }
         }
     }
+
     void LoadWorkers()
     {
-        List<string> workers=db.GetUserEmailsByRole(3);
+        List<string> workers = db.GetUserEmailsByRole(3); // 3 - это роль Worker
+        WorkerDropDown.ClearOptions(); // Хорошая практика очищать перед добавлением
         WorkerDropDown.AddOptions(workers);
-        //Debug.Log("���������!");
     }
+
     public void ChangeMenu(int newId)
     {
         Debug.Log(activeMenuId + " --> " + newId);
@@ -72,7 +81,6 @@ public class MasterMenuScript : MonoBehaviour
                 break;
         }
 
-
         switch (newId)
         {
             case 0:
@@ -85,9 +93,39 @@ public class MasterMenuScript : MonoBehaviour
         activeMenuId = newId;
     }
 
-    public void OpenChat()
+    public void OpenMasterChat()
     {
         if (ChatScript.Instance != null)
-            ChatScript.Instance.OpenChat();
+        {
+            if (menuScript == null) 
+            {
+                Debug.LogError("В MasterMenuScript не привязан MenuScript! Перетяни его в инспекторе.");
+                return;
+            }
+
+            int myId = menuScript.activeUserId;
+            ChatScript.Instance.OpenChat(0, myId);
+        }
+        else
+        {
+            Debug.LogError("ChatScript не найден!");
+        }
+    }
+
+    public void ExitToMenu()
+    {
+        Debug.Log("Master ExitToMenu called");
+        
+        // В MasterMenu у нас нет списка кнопок taskLists, поэтому удалять нечего.
+        // Просто выходим.
+
+        if (menuScript == null)
+        {
+            Debug.LogError("MenuScript reference is missing in MasterMenuScript!");
+            return;
+        }
+        
+        // Возвращаемся в меню входа (id=1)
+        menuScript.ChangeMenu(1);
     }
 }
