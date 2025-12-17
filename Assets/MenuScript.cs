@@ -20,6 +20,7 @@ public class MenuScript : MonoBehaviour
 
 
     [SerializeField] WorkerMenu workerMenu;
+    [SerializeField] MasterMenuScript masterMenu;
 
     public int activeUserId = 5000;
     public DBScript db = new DBScript();
@@ -98,6 +99,7 @@ public class MenuScript : MonoBehaviour
                 break;
             case 3:
                 MasterMenu.SetActive(true);
+                masterMenu.LoadMenu();
                 break;
             case 4:
                 WorkerMenu.SetActive(true);

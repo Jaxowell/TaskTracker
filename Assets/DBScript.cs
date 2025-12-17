@@ -10,11 +10,105 @@ using System.Xml.Linq;
 
 public class DBScript// : MonoBehaviour
 {
-    string filePath = "URI=file:" + Application.dataPath + "/Database.db";
-
+    string filePath = "URI=file:" + Application.streamingAssetsPath + "/Database.db";
+    public string[] statusColors = new string[4];
     
+    private void LoadColors()
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT color FROM status";
+            
+            using (var reader = command.ExecuteReader())
+            {
+                int i = 0;
+                while (reader.Read())
+                {
+                    statusColors[i] = reader.GetString(0);
+                    i++;
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+           
+        }
+    }
+    public int GetLastTaskId()
+    {
+        int id = -1;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT MAX(idTask) FROM task";
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    id = reader.GetInt32(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return id;
+        }
+    }
+    public string GetStatusById(int id)
+    {
+        string name = "";
+        //int id = -1;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM status WHERE idStatus = @Id";
+            command.Parameters.AddWithValue("@Id", id);
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    name = reader.GetString(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return name;
+        }
+    }
+    public string GetNameById(int id)
+    {
+        string name = "";
+        //int id = -1;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM users WHERE idUser = @userId";
+            command.Parameters.AddWithValue("@userId", id);
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    name = reader.GetString(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return name;
+        }
+    }
     public bool VerifyLogin(string name, string password)
     {
+        LoadColors();
         //password = Hasher.HashPassword(password);
 
         using (var connection = new SqliteConnection(filePath))
@@ -34,6 +128,7 @@ public class DBScript// : MonoBehaviour
                 }
             }
             //Debug.Log(password+" "+hash);
+            connection.Close();
             return Hasher.VerifyPassword(password, hash);
         }
     }
@@ -60,6 +155,7 @@ public class DBScript// : MonoBehaviour
             {
                 Debug.LogError("Ошибка добавления пользователя: " + ex.Message);
             }
+            connection.Close();
         }
     }
     public void AddTask(string title, string description, int masterid ,int workerId)
@@ -87,6 +183,7 @@ public class DBScript// : MonoBehaviour
             {
                 Debug.LogError("Ошибка добавления задачи: " + ex.Message);
             }
+            connection.Close();
         }
     }
     public void AddEpic(string title, string description, int masterId)
@@ -114,6 +211,7 @@ public class DBScript// : MonoBehaviour
             {
                 Debug.LogError("Ошибка добавления эпика: " + ex.Message);
             }
+            connection.Close();
         }
     }
     public int GetUserRole(string name)
@@ -134,6 +232,7 @@ public class DBScript// : MonoBehaviour
                     roleId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
                 }
             }
+            connection.Close();
             return roleId;
         }
     }
@@ -155,6 +254,7 @@ public class DBScript// : MonoBehaviour
                     userId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
                 }
             }
+            connection.Close();
             return userId;
         }
     }
@@ -176,11 +276,12 @@ public class DBScript// : MonoBehaviour
                     userId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
                 }
             }
+            connection.Close();
             return userId;
         }
     }
 
-    public List<string> GetTaskByMaster(int masterId)
+    public List<string> GetTaskBySensei(int masterId)
     {
         List<string> tasks = new List<string>();
         // Строка подключения к базе данных
@@ -204,6 +305,7 @@ public class DBScript// : MonoBehaviour
                     }
                 }
             }
+            connection.Close();
         }
         return tasks;
     }
@@ -231,6 +333,7 @@ public class DBScript// : MonoBehaviour
                     }
                 }
             }
+            connection.Close();
         }
         return epic;
     }
@@ -271,10 +374,10 @@ public class DBScript// : MonoBehaviour
                     }
                 }
             }
+            connection.Close();
         }
         return task;
     }
-
     public List<string> GetUserEmailsByRole(int roleId)
     {
         List<string> emails = new List<string>();
@@ -299,8 +402,70 @@ public class DBScript// : MonoBehaviour
                     }
                 }
             }
+            connection.Close();
         }
 
         return emails;
+    }
+    public List<Task> GetTasksByMaster(int masterId)
+    {
+        List<Task> tasks=new List<Task>();
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idTask, title, user_task_id, description, status_id FROM task WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+            //(int id, string title, string workerName, int workerId, string description, int statusId, string masterName, int masterId)
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(0);
+                    string title=reader.GetString(1);
+                    int workerId=reader.GetInt32(2);
+                    string description=reader.GetString(3);
+                    int statusId=reader.GetInt32(4);
+                    //Debug.Log(workerId);
+
+                    var commandMinor = connection.CreateCommand();
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @worker_id";
+                    commandMinor.Parameters.AddWithValue("@worker_id", workerId);
+
+                    string workerName;
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        workerName = readerMinor.GetString(0);
+                        //Debug.Log(workerName);
+                    }
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @master_id";
+                    commandMinor.Parameters.AddWithValue("@master_id", masterId);
+
+                    string masterName;
+
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        masterName = readerMinor.GetString(0);
+                        //Debug.Log(masterName);
+                    }
+
+                    Task task = new Task(id,title,workerName,workerId,description,statusId,masterName, masterId);
+                    tasks.Add(task);
+                }
+            }
+            connection.Close();
+        }
+        return tasks;
+    }
+    public List<Task> GetTasksByWorker(int workerId)
+    {
+        List<Task> tasks = new List<Task>();
+        return tasks;
+
     }
 }
