@@ -1,160 +1,136 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI; 
 using TMPro;          
-using UnityEngine.Networking; 
-using Unity.VisualScripting.Dependencies.Sqlite;
-using System.Xml.Linq;
-using Mono.Data.Sqlite;
 
 public class ChatScript : MonoBehaviour
 {
     public static ChatScript Instance;
 
-    [Header("UI Компоненты")]
-    [SerializeField] private GameObject chatWindowRoot;     // Вся панель чата (включая фон)
-    [SerializeField] private ScrollRect scrollRect;         // Скролл
-    [SerializeField] private Transform contentContainer;    // Content внутри скролла
-    [SerializeField] private TMP_InputField inputField;     // Поле ввода (TMP!)
-    [SerializeField] private GameObject messagePrefab;      // Префаб сообщения (должен быть в Project)
+    [Header("UI")]
+    [SerializeField] private GameObject chatWindowRoot;
+    [SerializeField] private ScrollRect scrollRect;
+    [SerializeField] private Transform contentContainer;
+    [SerializeField] private TMP_InputField inputField;
+    [SerializeField] private GameObject messagePrefab;
 
-    // Внутренние данные
+    
+
     private DBScript db;
     private int currentTaskId = -1; 
-    private int currentUserId = 1;  // Нужно получать при логине
+    private int currentUserId = 1;  
     private bool isChatOpen = false;
 
     private void Awake()
     {
-        SqliteConnection.ClearAllPools();
-        // Singleton - чтобы был один экземпляр
         if (Instance == null) Instance = this;
         else { Destroy(gameObject); return; }
 
         db = new DBScript();
         
-        // Гарантированно создаем таблицы при старте, чтобы всё работало
-        db.InitChatTables();
-
-        // Скрываем окно при запуске
         if (chatWindowRoot != null) chatWindowRoot.SetActive(false);
     }
 
-    /// <summary>
-    /// Метод открытия чата
-    /// </summary>
-    /// <param name="taskId">ID задачи (Task ID)</param>
-    /// <param name="userId">ID текущего пользователя (кто открыл)</param>
     public void OpenChat(int taskId, int userId)
     {
-        // Включаем сам Chat объект (если он вдруг выключен в иерархии)
+        // Если сам объект Chat выключен, включаем
         if (!gameObject.activeSelf) gameObject.SetActive(true);
 
         currentTaskId = taskId;
         currentUserId = userId;
-
-        Debug.Log($"Открыт чат. Task: {taskId}, User: {userId}");
-
-        ShowInterface();
-    }
-    
-    // Для совместимости, если где-то вызывают без параметров
-    public void OpenChat() 
-    {
-        // Временная заглушка, лучше не использовать
-        OpenChat(1, 1);
-    }
-
-    private void ShowInterface()
-    {
+        
         isChatOpen = true;
         chatWindowRoot.SetActive(true);
         
-        // Сразу загружаем сообщения
-        UpdateMessages();
-        
-        // Запускаем автообновление (поллинг) раз в 1.5 секунды
-        // Это симуляция работы сервера, где новые сообщения могут прийти от других
-        StopAllCoroutines();
+        // 1. Сразу загружаем сообщения один раз
+        StartCoroutine(UpdateMessagesRoutine());
+
+        // 2. Запускаем цикл автообновления
+        StopAllCoroutines(); // На всякий случай останавливаем старые
         StartCoroutine(ChatLoop());
     }
 
     public void CloseChat()
     {
         isChatOpen = false;
-        StopAllCoroutines();
+        StopAllCoroutines(); // ОСТАНАВЛИВАЕМ таймер, чтобы не грузить сеть
         chatWindowRoot.SetActive(false);
     }
 
-    // Метод для кнопки "Отправить"
     public void OnSendButton()
     {
-        if (inputField == null) return;
+        if (inputField == null || string.IsNullOrEmpty(inputField.text.Trim())) return;
+        
         string text = inputField.text.Trim();
-
-        if (string.IsNullOrEmpty(text)) return;
-
-        // 1. Отправляем в базу
-        db.SendMessage(currentTaskId, currentUserId, text);
-
-        // 2. Очищаем поле
         inputField.text = "";
-        
-        // 3. Держим фокус на поле ввода (удобство)
-        inputField.ActivateInputField();
+        inputField.ActivateInputField(); // Вернуть фокус, чтобы писать дальше удобно
 
-        // 4. Мгновенно обновляем чат
-        UpdateMessages();
-        
-        // 5. Принудительный скролл вниз
-        StartCoroutine(ForceScrollDown());
+        // Отправляем
+        StartCoroutine(db.SendMessageWeb(currentTaskId, currentUserId, text));
+
+        // Обновляем чат чуть погодя (даем серверу 0.1 сек на запись)
+        Invoke("ForceUpdate", 0.1f);
     }
 
-    // Перерисовка сообщений
-    private void UpdateMessages()
+    void ForceUpdate() 
     {
-        // Сначала очищаем старые плашки (можно оптимизировать через пул объектов, но пока так)
-        foreach (Transform child in contentContainer)
-        {
-            Destroy(child.gameObject);
-        }
-
-        // Получаем данные из базы
-        var messages = db.GetChatMessages(currentTaskId);
-
-        // Создаем новые
-        foreach (var msg in messages)
-        {
-            CreateMessageBubble(msg.SenderName, msg.Text, msg.SenderName == GetCurrentUserName());
-        }
+        if(isChatOpen) StartCoroutine(UpdateMessagesRoutine()); 
     }
 
-
-    private void CreateMessageBubble(string userName, string text, bool isMe)
-    {
-        if (messagePrefab == null) return;
-
-        GameObject bubble = Instantiate(messagePrefab, contentContainer);
-        
-        TMP_Text tmp = bubble.GetComponentInChildren<TMP_Text>();
-        if (tmp != null)
-        {
-            string colorHex = isMe ? "#00FF00" : "#FFA500"; 
-            tmp.text = $"<color={colorHex}><b>{userName}:</b></color> {text}";
-        }
-    }
-
-    private string GetCurrentUserName()
-    {
-        return db.GetUserNameById(currentUserId); 
-    }
-
+    // --- ГЛАВНАЯ МАГИЯ: ЦИКЛ АВТООБНОВЛЕНИЯ ---
     IEnumerator ChatLoop()
     {
         while (isChatOpen)
         {
+            // Ждем 1.5 секунды
             yield return new WaitForSeconds(1.5f);
-            UpdateMessages(); 
+            
+            // Если окно всё еще открыто - обновляем
+            if (isChatOpen)
+            {
+                yield return StartCoroutine(UpdateMessagesRoutine());
+            }
+        }
+    }
+
+    IEnumerator UpdateMessagesRoutine()
+    {
+        // Запрашиваем сообщения
+        yield return StartCoroutine(db.GetChatMessagesWeb(currentTaskId, (messages) => 
+        {
+            // Если окно закрыли, пока ждали ответ - ничего не делаем
+            if (!isChatOpen) return;
+
+            // Очистка (удаляем старые сообщения)
+            foreach (Transform child in contentContainer) Destroy(child.gameObject);
+
+            // Создание новых
+            foreach (var msg in messages)
+            {
+                CreateMessageBubble(msg.SenderName, msg.Text); 
+            }
+            
+            // Принудительный скролл вниз (можно убрать, если мешает читать)
+            // StartCoroutine(ForceScrollDown());
+        }));
+    }
+
+    private void CreateMessageBubble(string userName, string text)
+    {
+        if (messagePrefab == null) return;
+        
+        GameObject bubble = Instantiate(messagePrefab, contentContainer);
+        TMP_Text tmp = bubble.GetComponentInChildren<TMP_Text>();
+        
+        if (tmp != null)
+        {
+            // Получаем имя текущего юзера (для раскраски)
+            // Тут можно доработать, сравнивая ID, но пока сравним имена или просто покрасим всех
+            // Для простоты пока красим всех одинаково, или выделяем "себя" если знаем своё имя
+            
+            // Простая раскраска: Имя жирным, текст обычным
+            tmp.text = $"<b><color=#FFA500>{userName}:</color></b> {text}";
         }
     }
 
@@ -163,6 +139,5 @@ public class ChatScript : MonoBehaviour
         yield return new WaitForEndOfFrame();
         Canvas.ForceUpdateCanvases();
         if(scrollRect != null) scrollRect.verticalNormalizedPosition = 0f; 
-        Canvas.ForceUpdateCanvases();
     }
 }

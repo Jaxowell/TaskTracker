@@ -20,7 +20,7 @@ public class MenuScript : MonoBehaviour
 
     [SerializeField] WorkerMenu workerMenu;
 
-    public int activeUserId = 0; // По умолчанию 0
+    public int activeUserId = 0; // ID текущего пользователя
     public DBScript db = new DBScript();
     [SerializeField] TMP_InputField loginMenu;
     [SerializeField] TMP_InputField passwordMenu;
@@ -37,7 +37,6 @@ public class MenuScript : MonoBehaviour
     {
         bool inputProblem = false;
         
-        // Проверки на пустоту (твоя улучшенная версия)
         if (string.IsNullOrEmpty(loginMenu.text))
         {
             if(loginMenu.placeholder.GetComponent<TextMeshProUGUI>())
@@ -53,21 +52,23 @@ public class MenuScript : MonoBehaviour
 
         if(!inputProblem)
         {
-            // Используем твой безопасный метод входа (он не лочит базу)
-            var loginResult = db.TryLoginFull(loginMenu.text, passwordMenu.text);
-            
-            if (loginResult.Success)
-            {
-                activeUserId = loginResult.Id;
-                Debug.Log($"Успешный вход: {loginMenu.text} с ID {activeUserId}");
-                ChangeMenu(loginResult.Role + 1); 
-            }     
-            else
-            {
-                passwordMenu.text = "";
-                if(passwordMenu.placeholder.GetComponent<TextMeshProUGUI>())
-                    passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Неверный логин\n или пароль!";
-            }
+            StartCoroutine(db.TryLoginWeb(loginMenu.text, passwordMenu.text, OnLoginResult));
+        }
+    }
+
+    private void OnLoginResult(DBScript.UserLoginData loginResult)
+    {
+        if (loginResult.Success)
+        {
+            activeUserId = loginResult.Id;
+            Debug.Log($"Успешный вход: {loginMenu.text} с ID {activeUserId}");
+            ChangeMenu(loginResult.Role + 1);
+        }
+        else
+        {
+            passwordMenu.text = "";
+            if(passwordMenu.placeholder.GetComponent<TextMeshProUGUI>())
+                passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Неверный логин\n или пароль!";
         }
     }
 

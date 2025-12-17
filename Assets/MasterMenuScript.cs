@@ -14,19 +14,16 @@ public class MasterMenuScript : MonoBehaviour
     [SerializeField] GameObject CreateEpicMenu;
     [SerializeField] GameObject StatisticMenu;
 
-    [SerializeField] TextMeshProUGUI stat; // Статистика
+    [SerializeField] TextMeshProUGUI stat; // Текст для статистики
 
-    // Поля для ЗАДАЧ (Task)
     [SerializeField] TMP_InputField titleTask;
     [SerializeField] TMP_InputField descriptionTask;
     
-    // Поля для ЭПИКОВ (Epic)
     [SerializeField] TMP_InputField titleEpic;
     [SerializeField] TMP_InputField descriptionEpic;
 
     [SerializeField] TMP_Dropdown WorkerDropDown;
     
-    // Единая ссылка на главное меню (твое название)
     [SerializeField] MenuScript menuScript; 
 
     public void Start()
@@ -57,20 +54,23 @@ public class MasterMenuScript : MonoBehaviour
         // Проверка Dropdown
         if (WorkerDropDown.options.Count > 0)
         {
-            int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text);
+            string workerEmail = WorkerDropDown.options[WorkerDropDown.value].text;
             
-            if (!inputProblem)
+            // Сначала получаем ID работника по email (асинхронно)
+            StartCoroutine(db.GetUserIdByEmailWeb(workerEmail, (workerId) => 
             {
-                // Берем ID мастера из menuScript (твоя ссылка)
-                int masterId = menuScript.activeUserId;
-                
-                // Вызываем метод напарника (с masterId)
-                db.AddTask(titleTask.text, descriptionTask.text, masterId, workerId);
-                
-                titleTask.text = "";
-                descriptionTask.text = "";
-                WorkerDropDown.value = 0;
-            }
+                if (!inputProblem && workerId > 0)
+                {
+                    int masterId = menuScript.activeUserId;
+                    // Потом отправляем задачу
+                    StartCoroutine(db.AddTaskWeb(titleTask.text, descriptionTask.text, masterId, workerId));
+                    
+                    // Очистка
+                    titleTask.text = "";
+                    descriptionTask.text = "";
+                    WorkerDropDown.value = 0;
+                }
+            }));
         }
     }
 
@@ -93,8 +93,7 @@ public class MasterMenuScript : MonoBehaviour
         if (!inputProblem)
         {
             int masterId = menuScript.activeUserId;
-            // Метод AddEpic (из кода напарника)
-            db.AddEpic(titleEpic.text, descriptionEpic.text, masterId);
+            StartCoroutine(db.AddEpicWeb(titleEpic.text, descriptionEpic.text, masterId));
             
             titleEpic.text = "";
             descriptionEpic.text = "";
@@ -104,29 +103,19 @@ public class MasterMenuScript : MonoBehaviour
     void LoadStat()
     {
         int masterId = menuScript.activeUserId;
-        string answer = "";
-        
-        // Используем методы напарника
-        List<string> tasks = db.AIGetTaskByMaster(masterId);
-        for (int i = 0; i < tasks.Count; i+=2)
+        StartCoroutine(db.GetStatsWeb(masterId, (text) => 
         {
-            answer += "Задача " + tasks[i] + " выполнил " + tasks[i+1] +";\n";
-        }
-        
-        List<string> epic = db.GetEpicByMaster(masterId);
-        for (int i = 0; i < epic.Count; i++)
-        {
-            answer += "Эпик " + epic[i] + ";\n";
-        }
-        
-        if(stat != null) stat.text = answer;
+            if(stat != null) stat.text = text;
+        }));
     }
 
     void LoadWorkers()
     {
-        List<string> workers = db.GetUserEmailsByRole(3); 
-        WorkerDropDown.ClearOptions();
-        WorkerDropDown.AddOptions(workers);
+        StartCoroutine(db.GetWorkersEmailsWeb((emails) => 
+        {
+            WorkerDropDown.ClearOptions();
+            WorkerDropDown.AddOptions(emails);
+        }));
     }
 
     public void ChangeMenu(int newId)

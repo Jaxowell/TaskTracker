@@ -13,45 +13,31 @@ public class AdminMenuScript : MonoBehaviour
 
     public void SignUp()
     {
-
         bool inputProblem = false;
-        if (loginMenu.text == "")
-        {
-            loginMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� �����!";
-            inputProblem = true;
-        }
-        if (passwordMenu.text == "")
-        {
-            passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ������!";
-            inputProblem = true;
-        }
-        if (loginMenu.text == "")
-        {
-            emailMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� �����!";
-            inputProblem = true;
-        }
-        int roleId = roleMenu.value+1;
+        if (string.IsNullOrEmpty(loginMenu.text)) inputProblem = true;
+        if (string.IsNullOrEmpty(passwordMenu.text)) inputProblem = true;
+        if (string.IsNullOrEmpty(emailMenu.text)) inputProblem = true;
+
+        int roleId = roleMenu.value + 1; // 0->1 (Admin), 1->2 (Master)...
+
         if (!inputProblem)
         {
-            menuScript.db.AddUser(loginMenu.text, emailMenu.text, passwordMenu.text, roleId);
+            // ЗАПУСКАЕМ КОРУТИНУ
+            StartCoroutine(menuScript.db.AddUserWeb(loginMenu.text, emailMenu.text, passwordMenu.text, roleId));
+            
+            // Очистка
             loginMenu.text = "";
             emailMenu.text = "";
             passwordMenu.text = "";
-
         }
     }
+
     public void OpenAdminChat()
     {
         if (ChatScript.Instance != null)
         {
             int myId = menuScript.activeUserId;
-            
             ChatScript.Instance.OpenChat(0, myId);
         }
-        else
-        {
-            Debug.LogError("ChatScript не найден!");
-        }
-        
     }
 }
