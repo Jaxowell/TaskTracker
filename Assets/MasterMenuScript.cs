@@ -11,60 +11,121 @@ public class MasterMenuScript : MonoBehaviour
     
     [SerializeField] GameObject MainMenu;
     [SerializeField] GameObject CreateTaskMenu;
+    [SerializeField] GameObject CreateEpicMenu;
+    [SerializeField] GameObject StatisticMenu;
 
-    [SerializeField] TMP_InputField titleMenu;
-    [SerializeField] TMP_InputField descriptionMenu;
+    [SerializeField] TextMeshProUGUI stat; // Статистика
+
+    // Поля для ЗАДАЧ (Task)
+    [SerializeField] TMP_InputField titleTask;
+    [SerializeField] TMP_InputField descriptionTask;
+    
+    // Поля для ЭПИКОВ (Epic)
+    [SerializeField] TMP_InputField titleEpic;
+    [SerializeField] TMP_InputField descriptionEpic;
+
     [SerializeField] TMP_Dropdown WorkerDropDown;
     
-    // Обратите внимание: тут переменная называется menuScript
+    // Единая ссылка на главное меню (твое название)
     [SerializeField] MenuScript menuScript; 
 
-    // Start is called before the first frame update
     public void Start()
     {
         LoadWorkers();
         CreateTaskMenu.SetActive(false);
+        CreateEpicMenu.SetActive(false);
+        StatisticMenu.SetActive(false);
         MainMenu.SetActive(true);
     }
 
     public void AddTask()
     {
         bool inputProblem = false;
-        if (titleMenu.text == "")
+        if (string.IsNullOrEmpty(titleTask.text))
         {
-            if(titleMenu.placeholder.GetComponent<TextMeshProUGUI>())
-                titleMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите название!";
+            if(titleTask.placeholder.GetComponent<TextMeshProUGUI>())
+                titleTask.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите название!";
             inputProblem = true;
         }
-        if (descriptionMenu.text == "")
+        if (string.IsNullOrEmpty(descriptionTask.text))
         {
-            if(descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>())
-                descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
+            if(descriptionTask.placeholder.GetComponent<TextMeshProUGUI>())
+                descriptionTask.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
             inputProblem = true;
         }
-        if(WorkerDropDown.value == 0) // Обычно 0 элемент это "Выберите...", но зависит от реализации
-        {
-             // Тут можно добавить проверку, если первый элемент пустой
-        }
-
-        // Защита от пустого списка
+        
+        // Проверка Dropdown
         if (WorkerDropDown.options.Count > 0)
         {
-            int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text); 
+            int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text);
+            
             if (!inputProblem)
             {
-                db.AddTask(titleMenu.text, descriptionMenu.text, workerId);
-                titleMenu.text = "";
-                descriptionMenu.text = "";
+                // Берем ID мастера из menuScript (твоя ссылка)
+                int masterId = menuScript.activeUserId;
+                
+                // Вызываем метод напарника (с masterId)
+                db.AddTask(titleTask.text, descriptionTask.text, masterId, workerId);
+                
+                titleTask.text = "";
+                descriptionTask.text = "";
                 WorkerDropDown.value = 0;
             }
         }
     }
 
+    public void AddEpic()
+    {
+        bool inputProblem = false;
+        if (string.IsNullOrEmpty(titleEpic.text))
+        {
+            if(titleEpic.placeholder.GetComponent<TextMeshProUGUI>())
+                titleEpic.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите название!";
+            inputProblem = true;
+        }
+        if (string.IsNullOrEmpty(descriptionEpic.text))
+        {
+            if(descriptionEpic.placeholder.GetComponent<TextMeshProUGUI>())
+                descriptionEpic.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите описание!";
+            inputProblem = true;
+        }
+
+        if (!inputProblem)
+        {
+            int masterId = menuScript.activeUserId;
+            // Метод AddEpic (из кода напарника)
+            db.AddEpic(titleEpic.text, descriptionEpic.text, masterId);
+            
+            titleEpic.text = "";
+            descriptionEpic.text = "";
+        }
+    }
+
+    void LoadStat()
+    {
+        int masterId = menuScript.activeUserId;
+        string answer = "";
+        
+        // Используем методы напарника
+        List<string> tasks = db.AIGetTaskByMaster(masterId);
+        for (int i = 0; i < tasks.Count; i+=2)
+        {
+            answer += "Задача " + tasks[i] + " выполнил " + tasks[i+1] +";\n";
+        }
+        
+        List<string> epic = db.GetEpicByMaster(masterId);
+        for (int i = 0; i < epic.Count; i++)
+        {
+            answer += "Эпик " + epic[i] + ";\n";
+        }
+        
+        if(stat != null) stat.text = answer;
+    }
+
     void LoadWorkers()
     {
-        List<string> workers = db.GetUserEmailsByRole(3); // 3 - это роль Worker
-        WorkerDropDown.ClearOptions(); // Хорошая практика очищать перед добавлением
+        List<string> workers = db.GetUserEmailsByRole(3); 
+        WorkerDropDown.ClearOptions();
         WorkerDropDown.AddOptions(workers);
     }
 
@@ -73,33 +134,33 @@ public class MasterMenuScript : MonoBehaviour
         Debug.Log(activeMenuId + " --> " + newId);
         switch (activeMenuId)
         {
-            case 0:
-                MainMenu.SetActive(false);
-                break;
-            case 1:
-                CreateTaskMenu.SetActive(false);
-                break;
+            case 0: MainMenu.SetActive(false); break;
+            case 1: CreateTaskMenu.SetActive(false); break;
+            case 2: CreateEpicMenu.SetActive(false); break;
+            case 3: StatisticMenu.SetActive(false); break;
         }
 
         switch (newId)
         {
-            case 0:
-                MainMenu.SetActive(true);
-                break;
-            case 1:
-                CreateTaskMenu.SetActive(true);
+            case 0: MainMenu.SetActive(true); break;
+            case 1: CreateTaskMenu.SetActive(true); break;
+            case 2: CreateEpicMenu.SetActive(true); break;
+            case 3: 
+                LoadStat();
+                StatisticMenu.SetActive(true); 
                 break;
         }
         activeMenuId = newId;
     }
 
+    // Твой метод (сохранен)
     public void OpenMasterChat()
     {
         if (ChatScript.Instance != null)
         {
             if (menuScript == null) 
             {
-                Debug.LogError("В MasterMenuScript не привязан MenuScript! Перетяни его в инспекторе.");
+                Debug.LogError("В MasterMenuScript не привязан MenuScript!");
                 return;
             }
 
@@ -112,20 +173,14 @@ public class MasterMenuScript : MonoBehaviour
         }
     }
 
+    // Твой метод выхода (сохранен)
     public void ExitToMenu()
     {
-        Debug.Log("Master ExitToMenu called");
-        
-        // В MasterMenu у нас нет списка кнопок taskLists, поэтому удалять нечего.
-        // Просто выходим.
-
         if (menuScript == null)
         {
-            Debug.LogError("MenuScript reference is missing in MasterMenuScript!");
+            Debug.LogError("MenuScript reference is missing!");
             return;
         }
-        
-        // Возвращаемся в меню входа (id=1)
         menuScript.ChangeMenu(1);
     }
 }

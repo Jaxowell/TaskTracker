@@ -18,81 +18,83 @@ public class MenuScript : MonoBehaviour
     [SerializeField] GameObject MasterMenu;
     [SerializeField] GameObject WorkerMenu;
 
-
     [SerializeField] WorkerMenu workerMenu;
 
-    public int activeUserId = 0;
+    public int activeUserId = 0; // По умолчанию 0
     public DBScript db = new DBScript();
     [SerializeField] TMP_InputField loginMenu;
     [SerializeField] TMP_InputField passwordMenu;
 
-
     private void Start()
     {
-        //db.AddUser("Admin","admin@mail.ru","qwerty",1);
         SignInMenu.SetActive(true);
         AdminMenu.SetActive(false);
         MasterMenu.SetActive(false);
         WorkerMenu.SetActive(false);
     }
 
-
     public void SignIn()
     {
         bool inputProblem = false;
-        if (loginMenu.text == "")
+        
+        // Проверки на пустоту (твоя улучшенная версия)
+        if (string.IsNullOrEmpty(loginMenu.text))
         {
-            loginMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� �����!";
+            if(loginMenu.placeholder.GetComponent<TextMeshProUGUI>())
+                loginMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите логин!";
             inputProblem = true;
         }
-        if (passwordMenu.text == "")
+        if (string.IsNullOrEmpty(passwordMenu.text))
         {
-            passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ������!";
+            if(passwordMenu.placeholder.GetComponent<TextMeshProUGUI>())
+                passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите пароль!";
             inputProblem = true;
         }
+
         if(!inputProblem)
         {
+            // Используем твой безопасный метод входа (он не лочит базу)
             var loginResult = db.TryLoginFull(loginMenu.text, passwordMenu.text);
+            
             if (loginResult.Success)
             {
                 activeUserId = loginResult.Id;
-                ChangeMenu(loginResult.Role + 1); // Твоя логика с +1
+                Debug.Log($"Успешный вход: {loginMenu.text} с ID {activeUserId}");
+                ChangeMenu(loginResult.Role + 1); 
             }     
             else
             {
                 passwordMenu.text = "";
-                passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "�������� ������\n ��� �����!";
+                if(passwordMenu.placeholder.GetComponent<TextMeshProUGUI>())
+                    passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Неверный логин\n или пароль!";
             }
-            //Debug.Log(res);
         }
-        //return res;
     }
+
     public void ChangeMenu(int newId)
     {
         Debug.Log($"ChangeMenu: {activeMenuId} --> {newId}");
         
-        // Если ссылки слетели - ищем их заново (защита от дурака)
+        // Защита от дурака (твоя версия)
         if (SignInMenu == null || AdminMenu == null || MasterMenu == null || WorkerMenu == null)
         {
             Debug.LogError("Ссылки на меню не назначены в MenuScript!");
             return;
         }
 
-        // 1. ОТКЛЮЧАЕМ ТЕКУЩЕЕ (ИЛИ ВСЕ СРАЗУ ДЛЯ НАДЕЖНОСТИ)
-        // Вместо switch по id, который может глючить, просто выключим всё лишнее
+        // 1. ОТКЛЮЧАЕМ ТЕКУЩЕЕ
         if (newId != 1) SignInMenu.SetActive(false);
         if (newId != 2) AdminMenu.SetActive(false);
         if (newId != 3) MasterMenu.SetActive(false);
         if (newId != 4) WorkerMenu.SetActive(false);
 
-        // Дополнительно выключаем то, что считалось активным (если вдруг логика выше пропустила)
+        // Дополнительно выключаем старое
         switch (activeMenuId)
         {
             case 1: SignInMenu.SetActive(false); break;
             case 2: AdminMenu.SetActive(false); break;
             case 3: MasterMenu.SetActive(false); break;
             case 4: WorkerMenu.SetActive(false); break;
-            // Case 0 ничего не делает, и это нормально теперь
         }
 
         // 2. ВКЛЮЧАЕМ НОВОЕ
@@ -100,7 +102,6 @@ public class MenuScript : MonoBehaviour
         {
             case 1:
                 SignInMenu.SetActive(true);
-                // Очищаем поля ввода при возврате в логин
                 if(loginMenu != null) loginMenu.text = "";
                 if(passwordMenu != null) passwordMenu.text = "";
                 break;
@@ -116,7 +117,6 @@ public class MenuScript : MonoBehaviour
                 break;
         }
         
-        // Обновляем ID
         activeMenuId = newId;
     }
 }

@@ -61,18 +61,19 @@ public class DBScript
             }
         }
     }
-    public void AddTask(string title, string description, int workerId)
+    public void AddTask(string title, string description, int masterid ,int workerId)
     {
         using (var connection = new SqliteConnection(filePath))
         {
             OpenConnectionWithRetry(connection); 
 
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO task (title, description, status_id, user_task_id) VALUES" +
-                " (@title, @description, @status_id, @user_task_id)";
+            command.CommandText = "INSERT INTO task (title, description, status_id, master_id, user_task_id) VALUES" +
+                " (@title, @description, @status_id, @master_Id, @user_task_id)";
             command.Parameters.AddWithValue("@title", title);
             command.Parameters.AddWithValue("@description", description);
             command.Parameters.AddWithValue("@status_id", 1);
+            command.Parameters.AddWithValue("@master_id", masterid);
             command.Parameters.AddWithValue("@user_task_id", workerId);
             //command.Parameters.AddWithValue("@chat_task_id", 1);
 
@@ -84,6 +85,33 @@ public class DBScript
             catch (SqliteException ex)
             {
                 Debug.LogError("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ: " + ex.Message);
+            }
+        }
+    }
+    public void AddEpic(string title, string description, int masterId)
+    {
+        Debug.Log(" начинаем создавать эпик");
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO epic (title, description, status_id, master_id,  chat_epic_id) VALUES" +
+                " (@title, @description,  @status_id, @master_id, @chat_epic_id)";
+            command.Parameters.AddWithValue("@title", title);
+            command.Parameters.AddWithValue("@description", description);
+            command.Parameters.AddWithValue("@status_id", 1);
+            command.Parameters.AddWithValue("@master_id", masterId);
+            command.Parameters.AddWithValue("@chat_epic_id", 1);
+
+            try
+            {
+                command.ExecuteNonQuery();
+                Debug.Log("Эпик добавлен: " + title);
+            }
+            catch (SqliteException ex)
+            {
+                Debug.LogError("Ошибка добавления эпика: " + ex.Message);
             }
         }
     }
@@ -151,7 +179,7 @@ public class DBScript
         }
     }
 
-    public List<string> GetTaskByUser(int userId)
+    public List<string> GetTaskByMaster(int masterId)
     {
         List<string> tasks = new List<string>();
         // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
@@ -161,8 +189,8 @@ public class DBScript
             OpenConnectionWithRetry(connection); 
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT title FROM task WHERE user_task_id = @user_id";
-            command.Parameters.AddWithValue("@user_id", userId);
+            command.CommandText = "SELECT title FROM task WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
 
             using (var reader = command.ExecuteReader())
             {
@@ -177,6 +205,73 @@ public class DBScript
             }
         }
         return tasks;
+    }
+    public List<string> GetEpicByMaster(int masterId)
+    {
+        List<string> epic = new List<string>();
+        // Строка подключения к базе данных
+
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT title FROM epic WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    // Добавляем email в список, если он не NULL
+                    if (!reader.IsDBNull(0))
+                    {
+                        epic.Add(reader.GetString(0));
+                    }
+                }
+            }
+        }
+        return epic;
+    }
+    public List<string> AIGetTaskByMaster(int masterId)
+    {
+        List<string> task = new List<string>();
+
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+            SELECT e.title, u.email 
+            FROM task e 
+            LEFT JOIN users u ON e.user_task_id = u.idUser 
+            WHERE e.master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    // Добавляем название эпика
+                    if (!reader.IsDBNull(0))
+                    {
+                        task.Add(reader.GetString(0));
+                    }
+
+                    // Добавляем email пользователя (может быть NULL)
+                    if (!reader.IsDBNull(1))
+                    {
+                        task.Add(reader.GetString(1));
+                    }
+                    else
+                    {
+                        task.Add("No email"); // или пустая строка, если email отсутствует
+                    }
+                }
+            }
+        }
+        return task;
     }
 
     public List<string> GetUserEmailsByRole(int roleId)

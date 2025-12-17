@@ -5,8 +5,10 @@ using UnityEngine;
 
 public class WorkerMenu : MonoBehaviour
 {
+
     //public DBScript db = new DBScript();
     [SerializeField] MenuScript Mscript;
+
     [SerializeField] GameObject TaskLayout;
     [SerializeField] GameObject TaskPrefab;
     List<GameObject> taskLists = new List<GameObject>();
@@ -41,6 +43,7 @@ public class WorkerMenu : MonoBehaviour
     }
     void FullTaskLayout(int id)
     {
+        /*
         List<string> tasks = Mscript.db.GetTaskByUser(id);
         for (int i = 0; i < tasks.Count; i++)
         {
@@ -51,6 +54,7 @@ public class WorkerMenu : MonoBehaviour
             taskLists.Add(taskButton);
             Debug.Log(tasks[i]);
         }
+        */
     }
     
     public void OpenChat()
