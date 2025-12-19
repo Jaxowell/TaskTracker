@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +13,7 @@ public class MasterMenuScript : MonoBehaviour
     [SerializeField] GameObject CreateEpicMenu;//2
     [SerializeField] GameObject StatisticMenu;//3
 
-    [SerializeField] GameObject[] Menus;//0-main,1-tasks, 2- the task
+    [SerializeField] GameObject[] Menus;//0-main,1-tasks, 2- the task 3 -new task
 
     //1-epics, 2-the epic, 3-new epic, 4-tasks, 5-the task, 6-new task 7-stat, 
 
@@ -53,7 +54,7 @@ public class MasterMenuScript : MonoBehaviour
 
         tasksByMaster = db.GetTasksByMaster(Mscript.activeUserId);
         Debug.Log("Загрузили "+ tasksByMaster.Count+ " задач");
-        for (int i = 0; i < tasksByMaster.Count-1; i++)
+        for (int i = 0; i < tasksByMaster.Count; i++)
         {
             Debug.Log(tasksByMaster[i].Print());
             tasksByMaster[i].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[i].statusId-1]);
@@ -64,6 +65,11 @@ public class MasterMenuScript : MonoBehaviour
                 ShowTask(taskIndex);
             });
         }
+        for (int i = 0; i < Menus.Length; i++)
+        {
+            Menus[i].SetActive(false);
+        }
+        Menus[activeMenuIdd].SetActive(true);
     }
 
     [SerializeField] GameObject TaskTitle;
@@ -85,6 +91,15 @@ public class MasterMenuScript : MonoBehaviour
         UnityEngine.ColorUtility.TryParseHtmlString(colorCode, out Color newColor);
         TaskColor.GetComponent<Image>().color = newColor;
         SwitchMenu(2);
+    }
+    public void Exit()
+    {
+        Mscript.ChangeMenu(1);
+        for (int i = 0; i < tasksByMaster.Count; i++)
+        {
+            Destroy(tasksByMaster[i].TaskButton);
+        }
+        tasksByMaster.Clear();
     }
     public void AddTask()
     {
@@ -116,7 +131,7 @@ public class MasterMenuScript : MonoBehaviour
             task.PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[0]);
 
             Debug.Log(tasksByMaster[tasksByMaster.Count-1].Print());
-            tasksByMaster[tasksByMaster.Count - 1].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[tasksByMaster.Count - 1].statusId - 1]);
+            //tasksByMaster[tasksByMaster.Count - 1].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[tasksByMaster.Count - 1].statusId - 1]);
             UnityEngine.UI.Button button = tasksByMaster[tasksByMaster.Count - 1].TaskButton.GetComponent<UnityEngine.UI.Button>();
             int taskIndex = tasksByMaster.Count - 1;
             button.onClick.AddListener(() =>
@@ -127,7 +142,7 @@ public class MasterMenuScript : MonoBehaviour
             titleTask.text = "";
             descriptionTask.text = "";
             WorkerDropDown.value = 0;
-
+            Debug.Log($"задач: {tasksByMaster.Count} ");
             //tasksByMaster.
         }
     }
@@ -175,6 +190,7 @@ public class MasterMenuScript : MonoBehaviour
     }
     void LoadWorkers()
     {
+        WorkerDropDown.ClearOptions();
         List<string> workers=db.GetUserEmailsByRole(3);
         WorkerDropDown.AddOptions(workers);
         //Debug.Log("Загрузили!");
