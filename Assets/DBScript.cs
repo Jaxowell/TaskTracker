@@ -7,12 +7,30 @@ using System.Data;
 using UnityEditor.MemoryProfiler;
 using UnityEditor.VersionControl;
 using System.Xml.Linq;
+using Unity.VisualScripting;
 
 public class DBScript// : MonoBehaviour
 {
     string filePath = "URI=file:" + Application.streamingAssetsPath + "/Database.db";
     public string[] statusColors = new string[4];
-    
+    public void ChangeStatus(int taskId, int newStatusId)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "UPDATE task SET status_id = @aboba WHERE idTask = @huba;";
+            command.Parameters.AddWithValue("@aboba", newStatusId);
+            command.Parameters.AddWithValue("@huba", taskId);
+            command.ExecuteNonQuery();
+            //command.ExecuteReader();
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+
+        }
+        
+    }
     private void LoadColors()
     {
         using (var connection = new SqliteConnection(filePath))
@@ -34,6 +52,27 @@ public class DBScript// : MonoBehaviour
             //Debug.Log(password+" "+hash);
             connection.Close();
            
+        }
+    }
+    public List<string> LoadStatuses()
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM status";
+            List<string> statuses = new List<string>();
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    statuses.Add(reader.GetString(0));
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return statuses;
         }
     }
     public int GetLastTaskId()
@@ -465,6 +504,56 @@ public class DBScript// : MonoBehaviour
     public List<Task> GetTasksByWorker(int workerId)
     {
         List<Task> tasks = new List<Task>();
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idTask, title, master_id, description, status_id FROM task WHERE user_task_id = @aboba";
+            command.Parameters.AddWithValue("@aboba", workerId);
+            //(int id, string title, string workerName, int workerId, string description, int statusId, string masterName, int masterId)
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(0);
+                    string title = reader.GetString(1);
+                    int masterId = reader.GetInt32(2);
+                    string description = reader.GetString(3);
+                    int statusId = reader.GetInt32(4);
+                    //Debug.Log(workerId);
+
+                    var commandMinor = connection.CreateCommand();
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @aboba";
+                    commandMinor.Parameters.AddWithValue("@aboba", workerId);
+
+                    string workerName;
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        workerName = readerMinor.GetString(0);
+                        //Debug.Log(workerName);
+                    }
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @aboba";
+                    commandMinor.Parameters.AddWithValue("@aboba", masterId);
+
+                    string masterName;
+
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        masterName = readerMinor.GetString(0);
+                        //Debug.Log(masterName);
+                    }
+
+                    Task task = new Task(id, title, workerName, workerId, description, statusId, masterName, masterId);
+                    tasks.Add(task);
+                }
+            }
+            connection.Close();
+        }
         return tasks;
 
     }

@@ -4,14 +4,15 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+//using System.Runtime.InteropServices;
 
 public class MasterMenuScript : MonoBehaviour
 {
-    int activeMenuIdd = 0;
-    [SerializeField] GameObject MainMenu;//0
-    [SerializeField] GameObject CreateTaskMenu;//1
-    [SerializeField] GameObject CreateEpicMenu;//2
-    [SerializeField] GameObject StatisticMenu;//3
+    //int activeMenuIdd = 0;
+    //[SerializeField] GameObject MainMenu;//0
+    //[SerializeField] GameObject CreateTaskMenu;//1
+    //[SerializeField] GameObject CreateEpicMenu;//2
+    //[SerializeField] GameObject StatisticMenu;//3
 
     [SerializeField] GameObject[] Menus;//0-main,1-tasks, 2- the task 3 -new task
 
@@ -22,7 +23,7 @@ public class MasterMenuScript : MonoBehaviour
     [SerializeField] GameObject TaskPanel;
 
     int activeMenuId = 0;
-    int activeTaskId = 0;
+    //int activeTaskId = 0;
 
     [SerializeField] MenuScript Mscript;
     public DBScript db;
@@ -41,23 +42,23 @@ public class MasterMenuScript : MonoBehaviour
     // Start is called before the first frame update
     public void Start()
     {
-        db = Mscript.db;
+        //db = Mscript.db;
     }
 
     public void LoadMenu()
     {
-        LoadWorkers();
-        CreateTaskMenu.SetActive(false);
-        CreateEpicMenu.SetActive(false);
-        StatisticMenu.SetActive(false);
-        MainMenu.SetActive(true);
+        db = Mscript.db;
+        //CreateTaskMenu.SetActive(false);
+        //CreateEpicMenu.SetActive(false);
+        //StatisticMenu.SetActive(false);
+        //MainMenu.SetActive(true);
 
         tasksByMaster = db.GetTasksByMaster(Mscript.activeUserId);
         Debug.Log("Загрузили "+ tasksByMaster.Count+ " задач");
         for (int i = 0; i < tasksByMaster.Count; i++)
         {
             Debug.Log(tasksByMaster[i].Print());
-            tasksByMaster[i].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[i].statusId-1]);
+            tasksByMaster[i].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[i].statusId-1],true);
             UnityEngine.UI.Button button = tasksByMaster[i].TaskButton.GetComponent<UnityEngine.UI.Button>();
             int taskIndex = i;
             button.onClick.AddListener(() =>
@@ -69,7 +70,8 @@ public class MasterMenuScript : MonoBehaviour
         {
             Menus[i].SetActive(false);
         }
-        Menus[activeMenuIdd].SetActive(true);
+        LoadWorkers();
+        Menus[activeMenuId].SetActive(true);
     }
 
     [SerializeField] GameObject TaskTitle;
@@ -128,7 +130,7 @@ public class MasterMenuScript : MonoBehaviour
 
             Task task = new Task(db.GetLastTaskId(), titleTask.text, db.GetNameById(workerId), workerId, descriptionTask.text, 1, db.GetNameById(masterId), masterId);;
             tasksByMaster.Add(task);
-            task.PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[0]);
+            task.PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[0],true);
 
             Debug.Log(tasksByMaster[tasksByMaster.Count-1].Print());
             //tasksByMaster[tasksByMaster.Count - 1].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[tasksByMaster.Count - 1].statusId - 1]);
@@ -192,6 +194,7 @@ public class MasterMenuScript : MonoBehaviour
     {
         WorkerDropDown.ClearOptions();
         List<string> workers=db.GetUserEmailsByRole(3);
+        workers.Insert(0,"Исполнитель");
         WorkerDropDown.AddOptions(workers);
         //Debug.Log("Загрузили!");
     }
@@ -201,42 +204,42 @@ public class MasterMenuScript : MonoBehaviour
         Menus[newActiveId].SetActive(true);
         activeMenuId = newActiveId;
     }
-    public void ChangeMenu(int newId)
-    {
-        Debug.Log(activeMenuId + " --> " + newId);
-        switch (activeMenuId)
-        {
-            case 0:
-                MainMenu.SetActive(false);
-                break;
-            case 1:
-                CreateTaskMenu.SetActive(false);
-                break;
-            case 2:
-                CreateEpicMenu.SetActive(false);
-                break;
-            case 3:
-                StatisticMenu.SetActive(false);
-                break;
-        }
+    //public void ChangeMenu(int newId)
+    //{
+    //    Debug.Log(activeMenuId + " --> " + newId);
+    //    switch (activeMenuId)
+    //    {
+    //        case 0:
+    //            MainMenu.SetActive(false);
+    //            break;
+    //        case 1:
+    //            CreateTaskMenu.SetActive(false);
+    //            break;
+    //        case 2:
+    //            CreateEpicMenu.SetActive(false);
+    //            break;
+    //        case 3:
+    //            StatisticMenu.SetActive(false);
+    //            break;
+    //    }
 
 
-        switch (newId)
-        {
-            case 0:
-                MainMenu.SetActive(true);
-                break;
-            case 1:
-                CreateTaskMenu.SetActive(true);
-                break;
-            case 2:
-                CreateEpicMenu.SetActive(true);
-                break;
-            case 3:
-                LoadStat();
-                StatisticMenu.SetActive(true);
-                break;
-        }
-        activeMenuId = newId;
-    }
+    //    switch (newId)
+    //    {
+    //        case 0:
+    //            MainMenu.SetActive(true);
+    //            break;
+    //        case 1:
+    //            CreateTaskMenu.SetActive(true);
+    //            break;
+    //        case 2:
+    //            CreateEpicMenu.SetActive(true);
+    //            break;
+    //        case 3:
+    //            LoadStat();
+    //            StatisticMenu.SetActive(true);
+    //            break;
+    //    }
+    //    activeMenuId = newId;
+    //}
 }

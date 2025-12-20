@@ -26,7 +26,14 @@ public class Task
         this.masterName = masterName;
         this.masterId = masterId;
     }
-    public void PutTaskInPanel(GameObject TaskPrefab, GameObject TaskPanel, string colorCode)
+    public void ChangeColor(string colorCode)
+    {
+        Transform statusTransform = TaskButton.transform.Find("Status");
+        //colorCode = "#" + colorCode;
+        ColorUtility.TryParseHtmlString(colorCode, out Color newColor);
+        statusTransform.GetComponent<Image>().color = newColor;
+    }
+    public void PutTaskInPanel(GameObject TaskPrefab, GameObject TaskPanel, string colorCode, bool master)
     {
         TaskButton = GameObject.Instantiate(TaskPrefab);
         TaskButton.transform.SetParent(TaskPanel.transform);
@@ -35,7 +42,7 @@ public class Task
         titleTransform.GetComponent<TMP_Text>().text = title;
 
         Transform nameTransform = TaskButton.transform.Find("Name");
-        nameTransform.GetComponent<TMP_Text>().text = "Исполнитель:" + workerName;
+        nameTransform.GetComponent<TMP_Text>().text = master ? "Исполнитель:"  + workerName : "Тимлид:"+ masterName;
 
         Transform statusTransform = TaskButton.transform.Find("Status");
 
