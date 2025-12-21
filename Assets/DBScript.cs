@@ -77,7 +77,7 @@ public class DBScript// : MonoBehaviour
     }
     public int GetLastTaskId()
     {
-        int id = -1;
+        int id = 0;
         using (var connection = new SqliteConnection(filePath))
         {
             connection.Open();
@@ -95,6 +95,74 @@ public class DBScript// : MonoBehaviour
             //Debug.Log(password+" "+hash);
             connection.Close();
             return id;
+        }
+    }
+    public int GetLastEpicId()
+    {
+        int id = 0;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT MAX(idEpic) FROM epic";
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    id = reader.GetInt32(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return id;
+        }
+    }
+    public int GetLastSubTaskId(int epicId)
+    {
+        int id = 0;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT MAX(idSubtask) FROM subtask";
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    id = reader.GetInt32(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return id;
+        }
+    }
+    public string GetUserNameById(int userId)
+    {
+        string name = "nobody~~~";
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM users WHERE idUser=@id";
+            command.Parameters.AddWithValue("@id", userId);
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    name = reader.GetString(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return name;
         }
     }
     public string GetStatusById(int id)
@@ -225,6 +293,34 @@ public class DBScript// : MonoBehaviour
             connection.Close();
         }
     }
+    public void AddSubTask(string title, string description, int epicId, int workerId)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO subtask (title, description, status_id, epic_id, user_subtask_id, chat_subtask_id) VALUES" +
+                " (@title, @description, 1, @epic_id, @user_subtask_id, 69)";
+            command.Parameters.AddWithValue("@title", title);
+            command.Parameters.AddWithValue("@description", description);
+            command.Parameters.AddWithValue("@epic_id", epicId);
+            //command.Parameters.AddWithValue("@master_id", masterid);
+            command.Parameters.AddWithValue("@user_subtask_id", workerId);
+            //command.Parameters.AddWithValue("@chat_task_id", 1);
+
+            try
+            {
+                command.ExecuteNonQuery();
+                Debug.Log("Подзадача добавлена: " + title);
+            }
+            catch (SqliteException ex)
+            {
+                Debug.LogError("Ошибка добавления подзадачи: " + ex.Message);
+            }
+            connection.Close();
+        }
+    }
     private int AddChat(string name)
     {
         //Debug.Log(" начинаем создавать эпик");
@@ -274,7 +370,7 @@ public class DBScript// : MonoBehaviour
             command.Parameters.AddWithValue("@description", description);
             command.Parameters.AddWithValue("@status_id", 1);
             command.Parameters.AddWithValue("@master_id", masterId);
-            command.Parameters.AddWithValue("@chat_epic_id", 1);
+            command.Parameters.AddWithValue("@chat_epic_id", GetLastEpicId()+1);
 
             try
             {
@@ -534,6 +630,8 @@ public class DBScript// : MonoBehaviour
                     int count = 0;
 
                     Epic epic = new Epic(id, title, description, chatId, masterName, masterId,chatName, count);
+                    epic.subTasks = GetSubTasksByEpic(id, masterId, masterName);
+                    Debug.Log("Загрузили " + epic.subTasks.Count + " подзадач");
                     //(id, title, workerName, workerId, description, statusId, masterName, masterId);
                     epics.Add(epic);
                 }
@@ -651,6 +749,49 @@ public class DBScript// : MonoBehaviour
             connection.Close();
         }
         return tasks;
+
+    }
+    public List<Task> GetSubTasksByEpic(int epicId, int masterId, string masterName)
+    {
+        List<Task> subTasks = new List<Task>();
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idSubtask, title, description, status_id, user_subtask_id FROM subtask WHERE epic_id = @aboba";
+            command.Parameters.AddWithValue("@aboba", epicId);
+            //(int id, string title, string workerName, int workerId, string description, int statusId, string masterName, int masterId)
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(0);
+                    string title = reader.GetString(1);
+                    string description = reader.GetString(2);
+                    int statusId = reader.GetInt32(3);
+                    int workerId = reader.GetInt32(4);
+                    //Debug.Log(workerId);
+
+                    var commandMinor = connection.CreateCommand();
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @aboba";
+                    commandMinor.Parameters.AddWithValue("@aboba", epicId);
+                    string workerName;
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        workerName = readerMinor.GetString(0);
+                        //Debug.Log(workerName);
+                    }
+                    Task task = new Task(id, title, workerName, masterId, description, statusId, masterName, masterId);
+                    subTasks.Add(task);
+                }
+            }
+            connection.Close();
+        }
+        return subTasks;
 
     }
 }

@@ -15,7 +15,7 @@ public class Epic
     public string masterName { get; }
     public int masterId { get; }
     public int count { get; }
-    public List<Task> subTasks { get; }
+    public List<Task> subTasks { get; set; }
     //public List
 
     public Epic(int id,string title, string description, int chatId, string masterName, int masterId, string chatName, int count)

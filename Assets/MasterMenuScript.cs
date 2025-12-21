@@ -14,7 +14,7 @@ public class MasterMenuScript : MonoBehaviour
     //[SerializeField] GameObject CreateEpicMenu;//2
     //[SerializeField] GameObject StatisticMenu;//3
 
-    [SerializeField] GameObject[] Menus;//0-main,1-tasks, 2- the task, 3 -new task, 4- epics, 5 - the epic, 6- new epic, 7 - new subtask, 8 - the subtask
+    [SerializeField] GameObject[] Menus;//0-main,1-tasks, 2- the task, 3 -new task, 4- epics, 5 - the epic, 6- new epic, 7 - new subtask, 8 - the subtask, 9- chat
 
     //1-epics, 2-the epic, 3-new epic, 4-tasks, 5-the task, 6-new task 7-stat, 
 
@@ -22,9 +22,11 @@ public class MasterMenuScript : MonoBehaviour
     [SerializeField] GameObject EpicPrefab;
 
     [SerializeField] GameObject TaskPanel;
+    [SerializeField] GameObject SubTaskPanel;
     [SerializeField] GameObject EpicPanel;
 
     int activeMenuId = 0;
+    int activeEpicId = 0;
     //int activeTaskId = 0;
 
     [SerializeField] MenuScript Mscript;
@@ -52,7 +54,7 @@ public class MasterMenuScript : MonoBehaviour
         //StatisticMenu.SetActive(false);
         //MainMenu.SetActive(true);
 
-
+        //создаем список задач
         tasksByMaster = db.GetTasksByMaster(Mscript.activeUserId);
         Debug.Log("Загрузили "+ tasksByMaster.Count+ " задач");
         for (int i = 0; i < tasksByMaster.Count; i++)
@@ -67,7 +69,7 @@ public class MasterMenuScript : MonoBehaviour
             });
         }
         LoadWorkers();
-
+        //создаем список эпиков
         epicsByMaster =db.GetEpicsByMaster(Mscript.activeUserId);
         Debug.Log("Загрузили " + epicsByMaster.Count + " задач");
         for (int i = 0; i < epicsByMaster.Count; i++)
@@ -123,8 +125,14 @@ public class MasterMenuScript : MonoBehaviour
         EpicTitle.GetComponent<TMP_Text>().text = epicsByMaster[id].title;
         //ChatName.GetComponent<TMP_Text>().text = tasksByMaster[id].workerName;
         EpicDescription.GetComponent<TMP_Text>().text = epicsByMaster[id].description;
+        activeEpicId = id;
         //MasterEpicName.GetComponent<TMP_Text>().text = "Тимлид: " + tasksByMaster[id].masterName;
         //TaskStatus.GetComponent<TMP_Text>().text = db.GetStatusById(tasksByMaster[id].statusId);
+        for (int i = 0; i < epicsByMaster[activeEpicId].subTasks.Count; i++)
+        {
+            string colorCode = db.statusColors[epicsByMaster[activeEpicId].subTasks[i].statusId - 1];
+            epicsByMaster[activeEpicId].subTasks[i].PutInPanel(TaskPrefab, SubTaskPanel, colorCode,true);
+        }
 
         //string colorCode = "#" + db.statusColors[tasksByMaster[id].statusId - 1];
         //UnityEngine.ColorUtility.TryParseHtmlString(colorCode, out Color newColor);
@@ -219,12 +227,12 @@ public class MasterMenuScript : MonoBehaviour
         if (!inputProblem)
         {
             int masterId = Mscript.activeUserId;
-            ////////////////////////////////////////////////db.AddSubTask(titleSubTask.text, descriptionSubTask.text, masterId, workerId);
+            db.AddSubTask(titleSubTask.text, descriptionSubTask.text, epicsByMaster[activeEpicId].id, workerId);
             //passwordMenu.text = "";
 
-            ///////////////Task task = new Task(db.GetLastSubTaskId(), titleSubTask.text, db.GetNameById(workerId), workerId, descriptionSubTask.text, 1, db.GetNameById(masterId), masterId); ;
-            //////////epicsByMaster.Add(task);
-            ///////////////task.PutInPanel(TaskPrefab, TaskPanel, db.statusColors[0], true);
+            Task task = new Task(db.GetLastSubTaskId(epicsByMaster[activeEpicId].id), titleSubTask.text, db.GetNameById(workerId), workerId, descriptionSubTask.text, 1, db.GetNameById(masterId), masterId); ;
+            epicsByMaster[activeEpicId].subTasks.Add(task);
+            task.PutInPanel(TaskPrefab, SubTaskPanel, db.statusColors[0], true);
 
             //Debug.Log(tasksByMaster[tasksByMaster.Count - 1].Print());
             //tasksByMaster[tasksByMaster.Count - 1].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[tasksByMaster.Count - 1].statusId - 1]);
@@ -246,7 +254,7 @@ public class MasterMenuScript : MonoBehaviour
     }
     [SerializeField] TMP_InputField titleEpic;
     [SerializeField] TMP_InputField descriptionEpic;
-    [SerializeField] TMP_Dropdown WorkerEpicDropDown;
+    //[SerializeField] TMP_Dropdown WorkerEpicDropDown;
     public void AddEpic()
     {
         bool inputProblem = false;
@@ -264,8 +272,28 @@ public class MasterMenuScript : MonoBehaviour
         if (!inputProblem)
         {
             int masterId =Mscript.activeUserId;
-            Debug.Log("неа");
-            //db.AddEpic(titleEpic.text, descriptionEpic.text, masterId);//, workerId);
+            //Debug.Log("неа");
+            db.AddEpic(titleEpic.text, descriptionEpic.text, masterId);//, workerId);
+
+
+            //passwordMenu.text = "";
+            int epicId = db.GetLastEpicId() ;
+            int userId=Mscript.activeUserId;
+            string chatName = "Чат-" + titleEpic.text;
+            Epic epic = new Epic(epicId, titleEpic.text,descriptionEpic.text, epicId, db.GetUserNameById(userId), userId,chatName,0);//(db.GetLastTaskId(), titleTask.text, db.GetNameById(workerId), workerId, descriptionTask.text, 1, db.GetNameById(masterId), masterId); ;
+            
+            epicsByMaster.Add(epic);
+            epic.PutInPanel(EpicPrefab, EpicPanel, true);//(TaskPrefab, TaskPanel, db.statusColors[0], true);
+
+            //Debug.Log(tasksByMaster[tasksByMaster.Count - 1].Print());
+            //tasksByMaster[tasksByMaster.Count - 1].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[tasksByMaster.Count - 1].statusId - 1]);
+            UnityEngine.UI.Button button = epicsByMaster[epicsByMaster.Count - 1].EpicButton.GetComponent<UnityEngine.UI.Button>();
+            int epicIndex = tasksByMaster.Count - 1;
+            button.onClick.AddListener(() =>
+            {
+                ShowEpic(epicIndex);
+            });
+
             titleEpic.text = "";
             descriptionEpic.text = "";
             //passwordMenu.text = "";
@@ -292,12 +320,16 @@ public class MasterMenuScript : MonoBehaviour
     void LoadWorkers()
     {
         WorkerTaskDropDown.ClearOptions();
-        WorkerEpicDropDown.ClearOptions();
+        WorkerSubTaskDropDown.ClearOptions();
         List<string> workers=db.GetUserEmailsByRole(3);
         workers.Insert(0,"Исполнитель");
         WorkerTaskDropDown.AddOptions(workers);
-        WorkerEpicDropDown.AddOptions(workers);
+        WorkerSubTaskDropDown.AddOptions(workers);
         //Debug.Log("Загрузили!");
+    }
+    public void OpenChat()
+    {
+        SwitchMenu(9);
     }
     public void SwitchMenu(int newActiveId)
     {
