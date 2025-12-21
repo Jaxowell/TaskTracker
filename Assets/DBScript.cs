@@ -1,250 +1,797 @@
 using System.Collections;
 using System.Collections.Generic;
+using Mono.Data.Sqlite;
+using Unity.VisualScripting.Dependencies.Sqlite;
 using UnityEngine;
-using UnityEngine.Networking;
-using System;
+using System.Data;
+using UnityEditor.MemoryProfiler;
+using UnityEditor.VersionControl;
+using System.Xml.Linq;
+using Unity.VisualScripting;
 
-public class DBScript
+public class DBScript// : MonoBehaviour
 {
-    private string serverUrl = "http://localhost/api/"; 
-
-    [Serializable]
-    public class TaskItemData
+    string filePath = "URI=file:" + Application.streamingAssetsPath + "/Database.db";
+    public string[] statusColors = new string[4];
+    public void ChangeStatus(int taskId, int newStatusId)
     {
-        public int idTask;
-        public string title;
-        public string description;
-        public string status_name;
-    }
-
-    [Serializable]
-    public class TaskListWrapper
-    {
-        public TaskItemData[] tasks;
-    }
-
-    // Р”Р°РЅРЅС‹Рµ РґР»СЏ Р°РІС‚РѕСЂРёР·Р°С†РёРё Рё СЃС‚Р°С‚РёСЃС‚РёРєРё
-    [Serializable] public class ServerResponseLogin { public string status; public int id; public int role; }
-    [Serializable] public class WorkerListWrapper { public string[] workers; }
-    [Serializable] public class TaskStatItem { public string title; public string email; }
-    [Serializable] public class StatWrapper { public TaskStatItem[] items; }
-    
-    // Р”Р°РЅРЅС‹Рµ РґР»СЏ С‡Р°С‚Р°
-    [Serializable] public class ChatItem { public string name; public string message; public string timestamp; }
-    [Serializable] public class ChatWrapper { public ChatItem[] messages; }
-
-    public struct UserLoginData { public bool Success; public int Id; public int Role; }
-    public struct ChatMessageData { public string SenderName; public string Text; public string Time; }
-
-    // Р”РѕР±Р°РІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
-    public IEnumerator AddUserWeb(string name, string email, string password, int roleId)
-    {
-        WWWForm form = new WWWForm();
-        form.AddField("name", name);
-        form.AddField("email", email);
-        form.AddField("password", password);
-        form.AddField("role_id", roleId);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "add_user.php", form))
+        using (var connection = new SqliteConnection(filePath))
         {
-            yield return www.SendWebRequest();
-            if(www.result == UnityWebRequest.Result.Success) Debug.Log("User added: " + www.downloadHandler.text);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "UPDATE task SET status_id = @aboba WHERE idTask = @huba;";
+            command.Parameters.AddWithValue("@aboba", newStatusId);
+            command.Parameters.AddWithValue("@huba", taskId);
+            command.ExecuteNonQuery();
+            //command.ExecuteReader();
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+
         }
+        
     }
-
-    // РћС‚РїСЂР°РІРєР° СЃРѕРѕР±С‰РµРЅРёСЏ РІ С‡Р°С‚
-    public IEnumerator SendMessageWeb(int taskId, int userId, string message)
+    private void LoadColors()
     {
-        WWWForm form = new WWWForm();
-        form.AddField("task_id", taskId);
-        form.AddField("user_id", userId);
-        form.AddField("message", message);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "send_message.php", form))
+        using (var connection = new SqliteConnection(filePath))
         {
-            yield return www.SendWebRequest();
-        }
-    }
+            connection.Open();
 
-    // Р—Р°РіСЂСѓР·РєР° СЃРѕРѕР±С‰РµРЅРёР№ С‡Р°С‚Р°
-    public IEnumerator GetChatMessagesWeb(int taskId, Action<List<ChatMessageData>> callback)
-    {
-        WWWForm form = new WWWForm();
-        form.AddField("task_id", taskId);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "get_chat.php", form))
-        {
-            yield return www.SendWebRequest();
-            List<ChatMessageData> result = new List<ChatMessageData>();
-
-            if (www.result == UnityWebRequest.Result.Success)
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT color FROM status";
+            
+            using (var reader = command.ExecuteReader())
             {
-                var wrapper = JsonUtility.FromJson<ChatWrapper>(www.downloadHandler.text);
-                if (wrapper != null && wrapper.messages != null)
+                int i = 0;
+                while (reader.Read())
                 {
-                    foreach (var msg in wrapper.messages)
+                    statusColors[i] = reader.GetString(0);
+                    i++;
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+           
+        }
+    }
+    public List<string> LoadStatuses()
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM status";
+            List<string> statuses = new List<string>();
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    statuses.Add(reader.GetString(0));
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return statuses;
+        }
+    }
+    public int GetLastTaskId()
+    {
+        int id = 0;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT MAX(idTask) FROM task";
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    id = reader.GetInt32(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return id;
+        }
+    }
+    public int GetLastEpicId()
+    {
+        int id = 0;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT MAX(idEpic) FROM epic";
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    id = reader.GetInt32(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return id;
+        }
+    }
+    public int GetLastSubTaskId(int epicId)
+    {
+        int id = 0;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT MAX(idSubtask) FROM subtask";
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    id = reader.GetInt32(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return id;
+        }
+    }
+    public string GetUserNameById(int userId)
+    {
+        string name = "nobody~~~";
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM users WHERE idUser=@id";
+            command.Parameters.AddWithValue("@id", userId);
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    name = reader.GetString(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return name;
+        }
+    }
+    public string GetStatusById(int id)
+    {
+        string name = "";
+        //int id = -1;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM status WHERE idStatus = @Id";
+            command.Parameters.AddWithValue("@Id", id);
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    name = reader.GetString(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return name;
+        }
+    }
+    public string GetNameById(int id)
+    {
+        string name = "";
+        //int id = -1;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM users WHERE idUser = @userId";
+            command.Parameters.AddWithValue("@userId", id);
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    name = reader.GetString(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return name;
+        }
+    }
+    public bool VerifyLogin(string name, string password)
+    {
+        LoadColors();
+        //password = Hasher.HashPassword(password);
+
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT password FROM users WHERE name = @name";
+            command.Parameters.AddWithValue("@name", name);
+
+            string hash="";
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    hash = reader.GetString(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return Hasher.VerifyPassword(password, hash);
+        }
+    }
+    public void AddUser(string name, string email, string password, int roleId)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO users (name, email, password, role_id) VALUES (@username, @email, @password, @role_id)";
+            command.Parameters.AddWithValue("@username", name);
+            command.Parameters.AddWithValue("@email", email);
+            password = Hasher.HashPassword(password);
+            command.Parameters.AddWithValue("@password", password);
+            command.Parameters.AddWithValue("@role_id", roleId);
+
+            try
+            {
+                command.ExecuteNonQuery();
+                Debug.Log("Пользователь добавлен: " + name);
+            }
+            catch (SqliteException ex)
+            {
+                Debug.LogError("Ошибка добавления пользователя: " + ex.Message);
+            }
+            connection.Close();
+        }
+    }
+    public void AddTask(string title, string description, int masterid ,int workerId)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO task (title, description, status_id, master_id, user_task_id) VALUES" +
+                " (@title, @description, @status_id, @master_Id, @user_task_id)";
+            command.Parameters.AddWithValue("@title", title);
+            command.Parameters.AddWithValue("@description", description);
+            command.Parameters.AddWithValue("@status_id", 1);
+            command.Parameters.AddWithValue("@master_id", masterid);
+            command.Parameters.AddWithValue("@user_task_id", workerId);
+            //command.Parameters.AddWithValue("@chat_task_id", 1);
+
+            try
+            {
+                command.ExecuteNonQuery();
+                Debug.Log("Задача добавлена: " + title);
+            }
+            catch (SqliteException ex)
+            {
+                Debug.LogError("Ошибка добавления задачи: " + ex.Message);
+            }
+            connection.Close();
+        }
+    }
+    public void AddSubTask(string title, string description, int epicId, int workerId)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO subtask (title, description, status_id, epic_id, user_subtask_id, chat_subtask_id) VALUES" +
+                " (@title, @description, 1, @epic_id, @user_subtask_id, 69)";
+            command.Parameters.AddWithValue("@title", title);
+            command.Parameters.AddWithValue("@description", description);
+            command.Parameters.AddWithValue("@epic_id", epicId);
+            //command.Parameters.AddWithValue("@master_id", masterid);
+            command.Parameters.AddWithValue("@user_subtask_id", workerId);
+            //command.Parameters.AddWithValue("@chat_task_id", 1);
+
+            try
+            {
+                command.ExecuteNonQuery();
+                Debug.Log("Подзадача добавлена: " + title);
+            }
+            catch (SqliteException ex)
+            {
+                Debug.LogError("Ошибка добавления подзадачи: " + ex.Message);
+            }
+            connection.Close();
+        }
+    }
+    private int AddChat(string name)
+    {
+        //Debug.Log(" начинаем создавать эпик");
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO chat (name) VALUES (@name)";
+            command.Parameters.AddWithValue("@name", name);
+            command.ExecuteNonQuery();
+            connection.Close();
+        }
+
+        int id = -1;
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT MAX(idChat) FROM chat";
+
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    id = reader.GetInt32(0);// Сравнение паролей
+                }
+            }
+            //Debug.Log(password+" "+hash);
+            connection.Close();
+            return id;
+        }
+    }
+    public void AddEpic(string title, string description, int masterId)
+    {
+        Debug.Log(" начинаем создавать эпик");
+        int chatId= AddChat(title+"-чат");
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO epic (title, description, status_id, master_id,  chat_epic_id) VALUES" +
+                " (@title, @description,  @status_id, @master_id, @chat_epic_id)";
+            command.Parameters.AddWithValue("@title", title);
+            command.Parameters.AddWithValue("@description", description);
+            command.Parameters.AddWithValue("@status_id", 1);
+            command.Parameters.AddWithValue("@master_id", masterId);
+            command.Parameters.AddWithValue("@chat_epic_id", GetLastEpicId()+1);
+
+            try
+            {
+                command.ExecuteNonQuery();
+                Debug.Log("Эпик добавлен: " + title);
+            }
+            catch (SqliteException ex)
+            {
+                Debug.LogError("Ошибка добавления эпика: " + ex.Message);
+            }
+            connection.Close();
+        }
+    }
+    public int GetUserRole(string name)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT role_id FROM users WHERE name = @name";
+            command.Parameters.AddWithValue("@name", name);
+
+            int roleId = 0;
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    roleId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
+                }
+            }
+            connection.Close();
+            return roleId;
+        }
+    }
+    public int GetUserIdByEmail(string email)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idUser FROM users WHERE email = @email";
+            command.Parameters.AddWithValue("@email", email);
+
+            int userId = 0;
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    userId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
+                }
+            }
+            connection.Close();
+            return userId;
+        }
+    }
+    public int GetUserIdByName(string name)
+    {
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idUser FROM users WHERE name = @name";
+            command.Parameters.AddWithValue("@name", name);
+
+            int userId = 0;
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    userId = reader.GetInt32(0);//.GetString(0);// Сравнение паролей
+                }
+            }
+            connection.Close();
+            return userId;
+        }
+    }
+
+    /**
+    public List<string> GetTaskBySensei(int masterId)
+    {
+        List<string> tasks = new List<string>();
+        // Строка подключения к базе данных
+
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT title FROM task WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    // Добавляем email в список, если он не NULL
+                    if (!reader.IsDBNull(0))
                     {
-                        result.Add(new ChatMessageData { 
-                            SenderName = msg.name, 
-                            Text = msg.message, 
-                            Time = msg.timestamp 
-                        });
+                        tasks.Add(reader.GetString(0));
                     }
                 }
             }
-            callback(result);
+            connection.Close();
         }
+        return tasks;
     }
-
-    // РђРІС‚РѕСЂРёР·Р°С†РёСЏ
-    public IEnumerator TryLoginWeb(string login, string password, Action<UserLoginData> callback)
+    public List<string> GetEpicBySensei(int masterId)
     {
-        WWWForm form = new WWWForm();
-        form.AddField("name", login);
-        form.AddField("password", password);
+        List<string> epic = new List<string>();
+        // Строка подключения к базе данных
 
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "login.php", form))
+        using (var connection = new SqliteConnection(filePath))
         {
-            yield return www.SendWebRequest();
-            UserLoginData data = new UserLoginData { Success = false };
+            connection.Open();
 
-            if (www.result == UnityWebRequest.Result.Success)
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT title FROM epic WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+
+            using (var reader = command.ExecuteReader())
             {
-                var response = JsonUtility.FromJson<ServerResponseLogin>(www.downloadHandler.text);
-                if (response != null && response.status == "success")
+                while (reader.Read())
                 {
-                    data.Success = true;
-                    data.Id = response.id;
-                    data.Role = response.role;
-                }
-            }
-            callback(data);
-        }
-    }
-
-    // РџРѕР»СѓС‡РёС‚СЊ ID РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїРѕ email
-    public IEnumerator GetUserIdByEmailWeb(string email, Action<int> callback)
-    {
-        WWWForm form = new WWWForm();
-        form.AddField("email", email);
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "get_worker_id.php", form))
-        {
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                if (int.TryParse(www.downloadHandler.text, out int id))
-                    callback(id);
-                else callback(0);
-            }
-            else callback(0);
-        }
-    }
-
-    // Р”РѕР±Р°РІРёС‚СЊ СЌРїРёРє
-    public IEnumerator AddEpicWeb(string title, string description, int masterId)
-    {
-        WWWForm form = new WWWForm();
-        form.AddField("title", title);
-        form.AddField("description", description);
-        form.AddField("master_id", masterId);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "add_epic.php", form))
-        {
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success)
-                Debug.Log("Epic Created: " + www.downloadHandler.text);
-        }
-    }
-
-    // РџРѕР»СѓС‡РёС‚СЊ СЃРїРёСЃРѕРє СЂР°Р±РѕС‚РЅРёРєРѕРІ (РґР»СЏ РІС‹РїР°РґР°СЋС‰РµРіРѕ СЃРїРёСЃРєР°)
-    public IEnumerator GetWorkersEmailsWeb(Action<List<string>> callback)
-    {
-        using (UnityWebRequest www = UnityWebRequest.Get(serverUrl + "get_workers.php"))
-        {
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                var wrapper = JsonUtility.FromJson<WorkerListWrapper>(www.downloadHandler.text);
-                if (wrapper != null && wrapper.workers != null)
-                    callback(new List<string>(wrapper.workers));
-                else
-                    callback(new List<string>());
-            }
-        }
-    }
-
-
-    // Р”РѕР±Р°РІРёС‚СЊ Р·Р°РґР°С‡Сѓ
-    public IEnumerator AddTaskWeb(string title, string description, int masterId, int workerId)
-    {
-        WWWForm form = new WWWForm();
-        form.AddField("title", title);
-        form.AddField("description", description);
-        form.AddField("master_id", masterId);
-        form.AddField("worker_id", workerId);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "add_task.php", form))
-        {
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success)
-                Debug.Log("Task Created: " + www.downloadHandler.text);
-            else
-                Debug.LogError("Error adding task: " + www.error);
-        }
-    }
-
-    // РџРѕР»СѓС‡РёС‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ РґР»СЏ РјР°СЃС‚РµСЂР°
-    public IEnumerator GetStatsWeb(int masterId, Action<string> callback)
-    {
-        WWWForm form = new WWWForm();
-        form.AddField("master_id", masterId);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "get_stats.php", form))
-        {
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string json = "{\"items\":" + www.downloadHandler.text + "}"; // РҐР°Рє РґР»СЏ JsonUtility
-                var wrapper = JsonUtility.FromJson<StatWrapper>(json);
-                
-                string resultText = "";
-                if (wrapper != null && wrapper.items != null)
-                {
-                    foreach(var item in wrapper.items)
+                    // Добавляем email в список, если он не NULL
+                    if (!reader.IsDBNull(0))
                     {
-                        resultText += $"Р—Р°РґР°С‡Р° {item.title} РІС‹РїРѕР»РЅСЏРµС‚ {item.email};\n";
+                        epic.Add(reader.GetString(0));
                     }
                 }
-                callback(resultText);
             }
+            connection.Close();
         }
+        return epic;
     }
-
-    // Р—Р°РґР°С‡Рё РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ СЂР°Р±РѕС‚РЅРёРєР°
-    public IEnumerator GetWorkerTasksWeb(int workerId, Action<List<TaskItemData>> callback)
+    public List<string> AIGetTaskByMaster(int masterId)
     {
-        WWWForm form = new WWWForm();
-        form.AddField("worker_id", workerId);
+        List<string> task = new List<string>();
 
-        using (UnityWebRequest www = UnityWebRequest.Post(serverUrl + "get_worker_tasks.php", form))
+        using (var connection = new SqliteConnection(filePath))
         {
-            yield return www.SendWebRequest();
+            connection.Open();
 
-            List<TaskItemData> resultList = new List<TaskItemData>();
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+            SELECT e.title, u.email 
+            FROM task e 
+            LEFT JOIN users u ON e.user_task_id = u.idUser 
+            WHERE e.master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
 
-            if (www.result == UnityWebRequest.Result.Success)
+            using (var reader = command.ExecuteReader())
             {
-                try 
+                while (reader.Read())
                 {
-                    var wrapper = JsonUtility.FromJson<TaskListWrapper>(www.downloadHandler.text);
-                    if (wrapper != null && wrapper.tasks != null)
+                    // Добавляем название эпика
+                    if (!reader.IsDBNull(0))
                     {
-                        resultList.AddRange(wrapper.tasks);
+                        task.Add(reader.GetString(0));
+                    }
+
+                    // Добавляем email пользователя (может быть NULL)
+                    if (!reader.IsDBNull(1))
+                    {
+                        task.Add(reader.GetString(1));
+                    }
+                    else
+                    {
+                        task.Add("No email"); // или пустая строка, если email отсутствует
                     }
                 }
-                catch (Exception e) { Debug.LogError("JSON Error: " + e.Message); }
             }
-            callback(resultList);
+            connection.Close();
         }
+        return task;
+    }
+    */
+    public List<string> GetUserEmailsByRole(int roleId)
+    {
+        List<string> emails = new List<string>();
+        // Строка подключения к базе данных
+
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT email FROM users WHERE role_id = 3";
+            command.Parameters.AddWithValue("@role_id", roleId);
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    // Добавляем email в список, если он не NULL
+                    if (!reader.IsDBNull(0))
+                    {
+                        emails.Add(reader.GetString(0));
+                    }
+                }
+            }
+            connection.Close();
+        }
+
+        return emails;
+    }
+
+
+    public List<Epic> GetEpicsByMaster(int masterId)
+    {
+        List<Epic> epics = new List<Epic>();
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idEpic, title, description, chat_epic_id FROM epic WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+            //(int id, string title, string workerName, int workerId, string description, int statusId, string masterName, int masterId)
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(0);
+                    string title = reader.GetString(1);
+                    string description = reader.GetString(2);
+                    int chatId = reader.GetInt32(3);
+                    //Debug.Log(workerId);
+
+                    var commandMinor = connection.CreateCommand();
+                    commandMinor.CommandText = "SELECT name FROM chat WHERE idChat = @chat_id";
+                    commandMinor.Parameters.AddWithValue("@chat_id", chatId);
+
+                    string chatName;
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        chatName = readerMinor.GetString(0);
+                        //Debug.Log(workerName);
+                    }
+
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @master_id";
+                    commandMinor.Parameters.AddWithValue("@master_id", masterId);
+
+                    string masterName;
+
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        masterName = readerMinor.GetString(0);
+                        //Debug.Log(masterName);
+                    }
+                    int count = 0;
+
+                    Epic epic = new Epic(id, title, description, chatId, masterName, masterId,chatName, count);
+                    epic.subTasks = GetSubTasksByEpic(id, masterId, masterName);
+                    Debug.Log("Загрузили " + epic.subTasks.Count + " подзадач");
+                    //(id, title, workerName, workerId, description, statusId, masterName, masterId);
+                    epics.Add(epic);
+                }
+            }
+            connection.Close();
+        }
+        return epics;
+    }
+    public List<Task> GetTasksByMaster(int masterId)
+    {
+        List<Task> tasks = new List<Task>();
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idTask, title, user_task_id, description, status_id FROM task WHERE master_id = @master_id";
+            command.Parameters.AddWithValue("@master_id", masterId);
+            //(int id, string title, string workerName, int workerId, string description, int statusId, string masterName, int masterId)
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(0);
+                    string title = reader.GetString(1);
+                    int workerId = reader.GetInt32(2);
+                    string description = reader.GetString(3);
+                    int statusId = reader.GetInt32(4);
+                    //Debug.Log(workerId);
+
+                    var commandMinor = connection.CreateCommand();
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @worker_id";
+                    commandMinor.Parameters.AddWithValue("@worker_id", workerId);
+
+                    string workerName;
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        workerName = readerMinor.GetString(0);
+                        //Debug.Log(workerName);
+                    }
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @master_id";
+                    commandMinor.Parameters.AddWithValue("@master_id", masterId);
+
+                    string masterName;
+
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        masterName = readerMinor.GetString(0);
+                        //Debug.Log(masterName);
+                    }
+
+                    Task task = new Task(id, title, workerName, workerId, description, statusId, masterName, masterId);
+                    tasks.Add(task);
+                }
+            }
+            connection.Close();
+        }
+        return tasks;
+    }
+    public List<Task> GetTasksByWorker(int workerId)
+    {
+        List<Task> tasks = new List<Task>();
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idTask, title, master_id, description, status_id FROM task WHERE user_task_id = @aboba";
+            command.Parameters.AddWithValue("@aboba", workerId);
+            //(int id, string title, string workerName, int workerId, string description, int statusId, string masterName, int masterId)
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(0);
+                    string title = reader.GetString(1);
+                    int masterId = reader.GetInt32(2);
+                    string description = reader.GetString(3);
+                    int statusId = reader.GetInt32(4);
+                    //Debug.Log(workerId);
+
+                    var commandMinor = connection.CreateCommand();
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @aboba";
+                    commandMinor.Parameters.AddWithValue("@aboba", workerId);
+
+                    string workerName;
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        workerName = readerMinor.GetString(0);
+                        //Debug.Log(workerName);
+                    }
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @aboba";
+                    commandMinor.Parameters.AddWithValue("@aboba", masterId);
+
+                    string masterName;
+
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        masterName = readerMinor.GetString(0);
+                        //Debug.Log(masterName);
+                    }
+
+                    Task task = new Task(id, title, workerName, workerId, description, statusId, masterName, masterId);
+                    tasks.Add(task);
+                }
+            }
+            connection.Close();
+        }
+        return tasks;
+
+    }
+    public List<Task> GetSubTasksByEpic(int epicId, int masterId, string masterName)
+    {
+        List<Task> subTasks = new List<Task>();
+        using (var connection = new SqliteConnection(filePath))
+        {
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT idSubtask, title, description, status_id, user_subtask_id FROM subtask WHERE epic_id = @aboba";
+            command.Parameters.AddWithValue("@aboba", epicId);
+            //(int id, string title, string workerName, int workerId, string description, int statusId, string masterName, int masterId)
+
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(0);
+                    string title = reader.GetString(1);
+                    string description = reader.GetString(2);
+                    int statusId = reader.GetInt32(3);
+                    int workerId = reader.GetInt32(4);
+                    //Debug.Log(workerId);
+
+                    var commandMinor = connection.CreateCommand();
+                    commandMinor.CommandText = "SELECT name FROM users WHERE idUser = @aboba";
+                    commandMinor.Parameters.AddWithValue("@aboba", epicId);
+                    string workerName;
+                    using (var readerMinor = commandMinor.ExecuteReader())
+                    {
+                        readerMinor.Read();
+                        workerName = readerMinor.GetString(0);
+                        //Debug.Log(workerName);
+                    }
+                    Task task = new Task(id, title, workerName, masterId, description, statusId, masterName, masterId);
+                    subTasks.Add(task);
+                }
+            }
+            connection.Close();
+        }
+        return subTasks;
+
     }
 }
