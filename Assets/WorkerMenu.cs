@@ -80,7 +80,7 @@ public class WorkerMenu : MonoBehaviour
         for (int i = 0; i < tasksByWorker.Count; i++)
         {
             Debug.Log(tasksByWorker[i].Print());
-            tasksByWorker[i].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByWorker[i].statusId-1],false);
+            tasksByWorker[i].PutInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByWorker[i].statusId-1],false);
             UnityEngine.UI.Button button = tasksByWorker[i].TaskButton.GetComponent<UnityEngine.UI.Button>();
             int taskIndex = i;
             button.onClick.AddListener(() =>

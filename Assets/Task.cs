@@ -33,7 +33,7 @@ public class Task
         ColorUtility.TryParseHtmlString(colorCode, out Color newColor);
         statusTransform.GetComponent<Image>().color = newColor;
     }
-    public void PutTaskInPanel(GameObject TaskPrefab, GameObject TaskPanel, string colorCode, bool master)
+    public void PutInPanel(GameObject TaskPrefab, GameObject TaskPanel, string colorCode, bool master)
     {
         TaskButton = GameObject.Instantiate(TaskPrefab);
         TaskButton.transform.SetParent(TaskPanel.transform);
