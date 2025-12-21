@@ -1,97 +1,27 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-//using System.Runtime.InteropServices;
 
 public class MasterMenuScript : MonoBehaviour
 {
-    //int activeMenuIdd = 0;
-    //[SerializeField] GameObject MainMenu;//0
-    //[SerializeField] GameObject CreateTaskMenu;//1
-    //[SerializeField] GameObject CreateEpicMenu;//2
-    //[SerializeField] GameObject StatisticMenu;//3
+    // 0-main, 1-tasks, 2-the task, 3-new task, 4-epics, 5-the epic, 6-new epic, 7-new subtask, 8-the subtask, 9-chat
+    [Header("Панели и Меню")]
+    [SerializeField] GameObject[] Menus; 
 
-    [SerializeField] GameObject[] Menus;//0-main,1-tasks, 2- the task, 3 -new task, 4- epics, 5 - the epic, 6- new epic, 7 - new subtask, 8 - the subtask, 9- chat
-
-    //1-epics, 2-the epic, 3-new epic, 4-tasks, 5-the task, 6-new task 7-stat, 
-
+    [Header("Префабы и Контейнеры")]
     [SerializeField] GameObject TaskPrefab;
     [SerializeField] GameObject EpicPrefab;
-
     [SerializeField] GameObject TaskPanel;
     [SerializeField] GameObject SubTaskPanel;
     [SerializeField] GameObject EpicPanel;
 
-    int activeMenuId = 0;
-    int activeEpicId = 0;
-    //int activeTaskId = 0;
-
+    [Header("Ссылки")]
     [SerializeField] MenuScript Mscript;
-    public DBScript db;
+    public DBScript db; // Получаем из Mscript
 
-    [SerializeField] TextMeshProUGUI stat;
-
-    List<Task> tasksByMaster = new List<Task>();
-    
-
-    List<Epic> epicsByMaster = new List<Epic>();
-    //[SerializeField] MenuScript menuScript;
-
-    // Start is called before the first frame update
-    public void Start()
-    {
-        //db = Mscript.db;
-    }
-
-    public void LoadMenu()
-    {
-        db = Mscript.db;
-        //CreateTaskMenu.SetActive(false);
-        //CreateEpicMenu.SetActive(false);
-        //StatisticMenu.SetActive(false);
-        //MainMenu.SetActive(true);
-
-        //������� ������ �����
-        tasksByMaster = db.GetTasksByMaster(Mscript.activeUserId);
-        Debug.Log("��������� "+ tasksByMaster.Count+ " �����");
-        for (int i = 0; i < tasksByMaster.Count; i++)
-        {
-            Debug.Log(tasksByMaster[i].Print());
-            tasksByMaster[i].PutInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[i].statusId-1],true);
-            UnityEngine.UI.Button button = tasksByMaster[i].TaskButton.GetComponent<UnityEngine.UI.Button>();
-            int taskIndex = i;
-            button.onClick.AddListener(() =>
-            {
-                ShowTask(taskIndex);
-            });
-        }
-        LoadWorkers();
-        //������� ������ ������
-        epicsByMaster =db.GetEpicsByMaster(Mscript.activeUserId);
-        Debug.Log("��������� " + epicsByMaster.Count + " �����");
-        for (int i = 0; i < epicsByMaster.Count; i++)
-        {
-            //Debug.Log(tasksByMaster[i].Print());
-            epicsByMaster[i].PutInPanel(EpicPrefab, EpicPanel, true);//(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[i].statusId - 1], true);
-            UnityEngine.UI.Button button = epicsByMaster[i].EpicButton.GetComponent<UnityEngine.UI.Button>();
-            int epicIndex = i;
-            button.onClick.AddListener(() =>
-            {
-                ShowEpic(epicIndex);
-            });
-        }
-        for (int i = 0; i < Menus.Length; i++)
-        {
-            Menus[i].SetActive(false);
-        }
-
-        Menus[activeMenuId].SetActive(true);
-
-    }
-
+    [Header("UI Элементы просмотра Задачи")]
     [SerializeField] GameObject TaskTitle;
     [SerializeField] GameObject WorkerName;
     [SerializeField] GameObject TaskColor;
@@ -99,280 +29,314 @@ public class MasterMenuScript : MonoBehaviour
     [SerializeField] GameObject TaskDescription;
     [SerializeField] GameObject MasterTaskName;
 
+    [Header("UI Элементы просмотра Эпика")]
     [SerializeField] GameObject EpicTitle;
-    //[SerializeField] GameObject ChatName;
-    //[SerializeField] GameObject TaskColor;
-    //[SerializeField] GameObject TaskStatus;
     [SerializeField] GameObject EpicDescription;
-    //[SerializeField] GameObject MasterEpicName;
-    private void ShowTask(int id)
-    {
-        //id = 0;
-        TaskTitle.GetComponent<TMP_Text>().text = tasksByMaster[id].title;
-        WorkerName.GetComponent<TMP_Text>().text = "�����������: "+tasksByMaster[id].workerName;
-        TaskDescription.GetComponent<TMP_Text>().text = tasksByMaster[id].description;
-        MasterTaskName.GetComponent<TMP_Text>().text = "������: " + tasksByMaster[id].masterName;
-        TaskStatus.GetComponent<TMP_Text>().text = db.GetStatusById(tasksByMaster[id].statusId);
 
-        string colorCode = "#" + db.statusColors[tasksByMaster[id].statusId - 1];
-        UnityEngine.ColorUtility.TryParseHtmlString(colorCode, out Color newColor);
-        TaskColor.GetComponent<Image>().color = newColor;
-        SwitchMenu(2);
-    }
-    private void ShowEpic(int id)
-    {
-        //id = 0;
-        EpicTitle.GetComponent<TMP_Text>().text = epicsByMaster[id].title;
-        //ChatName.GetComponent<TMP_Text>().text = tasksByMaster[id].workerName;
-        EpicDescription.GetComponent<TMP_Text>().text = epicsByMaster[id].description;
-        activeEpicId = id;
-        //MasterEpicName.GetComponent<TMP_Text>().text = "������: " + tasksByMaster[id].masterName;
-        //TaskStatus.GetComponent<TMP_Text>().text = db.GetStatusById(tasksByMaster[id].statusId);
-        for (int i = 0; i < epicsByMaster[activeEpicId].subTasks.Count; i++)
-        {
-            string colorCode = db.statusColors[epicsByMaster[activeEpicId].subTasks[i].statusId - 1];
-            epicsByMaster[activeEpicId].subTasks[i].PutInPanel(TaskPrefab, SubTaskPanel, colorCode,true);
-        }
-
-        //string colorCode = "#" + db.statusColors[tasksByMaster[id].statusId - 1];
-        //UnityEngine.ColorUtility.TryParseHtmlString(colorCode, out Color newColor);
-        //TaskColor.GetComponent<Image>().color = newColor;
-        SwitchMenu(5);
-    }
-    public void Exit()
-    {
-        Mscript.ChangeMenu(1);
-        for (int i = 0; i < tasksByMaster.Count; i++)
-        {
-            Destroy(tasksByMaster[i].TaskButton);
-        }
-        tasksByMaster.Clear();
-        for (int i = 0; i < epicsByMaster.Count; i++)
-        {
-            Destroy(epicsByMaster[i].EpicButton);
-        }
-        epicsByMaster.Clear();
-    }
-
+    // Поля ввода для Новой Задачи
+    [Header("Создание Задачи")]
     [SerializeField] TMP_InputField titleTask;
     [SerializeField] TMP_InputField descriptionTask;
     [SerializeField] TMP_Dropdown WorkerTaskDropDown;
-    public void AddTask()
-    {
-        bool inputProblem = false;
-        if (titleTask.text == "")
-        {
-            titleTask.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
-        }
-        if (descriptionTask.text == "")
-        {
-            descriptionTask.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
-        }
-        if (WorkerTaskDropDown.value == 0)
-        {
-            //descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
-        }
-        int workerId = db.GetUserIdByEmail(WorkerTaskDropDown.options[WorkerTaskDropDown.value].text);
-        if (!inputProblem)
-        {
-            int masterId = Mscript.activeUserId;
-            db.AddTask(titleTask.text, descriptionTask.text, masterId, workerId);
-            //passwordMenu.text = "";
 
-            Task task = new Task(db.GetLastTaskId(), titleTask.text, db.GetNameById(workerId), workerId, descriptionTask.text, 1, db.GetNameById(masterId), masterId); ;
-            tasksByMaster.Add(task);
-            task.PutInPanel(TaskPrefab, TaskPanel, db.statusColors[0], true);
+    // Поля ввода для Нового Эпика
+    [Header("Создание Эпика")]
+    [SerializeField] TMP_InputField titleEpic;
+    [SerializeField] TMP_InputField descriptionEpic;
 
-            Debug.Log(tasksByMaster[tasksByMaster.Count - 1].Print());
-            //tasksByMaster[tasksByMaster.Count - 1].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[tasksByMaster.Count - 1].statusId - 1]);
-            UnityEngine.UI.Button button = tasksByMaster[tasksByMaster.Count - 1].TaskButton.GetComponent<UnityEngine.UI.Button>();
-            int taskIndex = tasksByMaster.Count - 1;
-            button.onClick.AddListener(() =>
-            {
-                ShowTask(taskIndex);
-            });
-
-            titleTask.text = "";
-            descriptionTask.text = "";
-            WorkerTaskDropDown.value = 0;
-            Debug.Log($"�����: {tasksByMaster.Count} ");
-            //tasksByMaster.
-        }
-    }
+    // Поля ввода для Нового Сабтаска
+    [Header("Создание Подзадачи")]
     [SerializeField] TMP_InputField titleSubTask;
     [SerializeField] TMP_InputField descriptionSubTask;
     [SerializeField] TMP_Dropdown WorkerSubTaskDropDown;
-    public void AddSubTask()
+
+    [Header("Статистика")]
+    [SerializeField] TextMeshProUGUI stat;
+
+    // Внутренние данные
+    int activeMenuId = 0;
+    int activeEpicId = 0; // ID текущего открытого эпика (из базы)
+    int activeEpicListIndex = 0; // Индекс эпика в локальном списке
+
+    List<Task> tasksByMaster = new List<Task>();
+    List<Epic> epicsByMaster = new List<Epic>();
+
+    public void Start()
     {
-        bool inputProblem = false;
-        if (titleSubTask.text == "")
-        {
-            titleSubTask.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
-        }
-        if (descriptionSubTask.text == "")
-        {
-            descriptionSubTask.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
-        }
-        if (WorkerSubTaskDropDown.value == 0)
-        {
-            //descriptionMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
-        }
-        int workerId = db.GetUserIdByEmail(WorkerSubTaskDropDown.options[WorkerSubTaskDropDown.value].text);
-        if (!inputProblem)
-        {
-            int masterId = Mscript.activeUserId;
-            db.AddSubTask(titleSubTask.text, descriptionSubTask.text, epicsByMaster[activeEpicId].id, workerId);
-            //passwordMenu.text = "";
-
-            Task task = new Task(db.GetLastSubTaskId(epicsByMaster[activeEpicId].id), titleSubTask.text, db.GetNameById(workerId), workerId, descriptionSubTask.text, 1, db.GetNameById(masterId), masterId); ;
-            epicsByMaster[activeEpicId].subTasks.Add(task);
-            task.PutInPanel(TaskPrefab, SubTaskPanel, db.statusColors[0], true);
-
-            //Debug.Log(tasksByMaster[tasksByMaster.Count - 1].Print());
-            //tasksByMaster[tasksByMaster.Count - 1].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[tasksByMaster.Count - 1].statusId - 1]);
-            /**
-            UnityEngine.UI.Button button = tasksByMaster[tasksByMaster.Count - 1].TaskButton.GetComponent<UnityEngine.UI.Button>();
-            int taskIndex = tasksByMaster.Count - 1;
-            button.onClick.AddListener(() =>
-            {
-                ShowTask(taskIndex);
-            });
-            */
-
-            titleSubTask.text = "";
-            descriptionSubTask.text = "";
-            WorkerSubTaskDropDown.value = 0;
-            //Debug.Log($"��������: {tasksByMaster.Count} ");
-            //tasksByMaster.
-        }
+        // Инициализация при старте (если нужно)
     }
-    [SerializeField] TMP_InputField titleEpic;
-    [SerializeField] TMP_InputField descriptionEpic;
-    //[SerializeField] TMP_Dropdown WorkerEpicDropDown;
+
+    // --- ГЛАВНЫЙ МЕТОД ЗАГРУЗКИ ---
+    public void LoadMenu()
+    {
+        db = Mscript.db;
+        
+        // 1. Загружаем цвета
+        StartCoroutine(db.LoadColorsWeb());
+
+        // 2. Загружаем список работников для Dropdown
+        LoadWorkers();
+
+        // 3. Последовательно грузим Задачи -> Эпики -> Сабтаски -> Включаем меню
+        StartCoroutine(LoadAllDataRoutine());
+    }
+
+    // Цепочка загрузок, чтобы данные появились корректно
+    IEnumerator LoadAllDataRoutine()
+    {
+        // --- ШАГ 1: Задачи Мастера ---
+        yield return StartCoroutine(db.GetTasksByMasterWeb(Mscript.activeUserId, (tasks) => 
+        {
+            tasksByMaster = tasks;
+            
+            // Очистка панели
+            foreach(Transform child in TaskPanel.transform) Destroy(child.gameObject);
+
+            // Отрисовка
+            for (int i = 0; i < tasksByMaster.Count; i++)
+            {
+                string colorCode = GetColorByStatusId(tasksByMaster[i].statusId);
+                tasksByMaster[i].PutInPanel(TaskPrefab, TaskPanel, colorCode, true);
+                
+                int index = i;
+                tasksByMaster[i].TaskButton.GetComponent<Button>().onClick.AddListener(() => ShowTask(index));
+            }
+        }));
+
+        // --- ШАГ 2: Эпики Мастера ---
+        yield return StartCoroutine(db.GetEpicsByMasterWeb(Mscript.activeUserId, (epics) => 
+        {
+            epicsByMaster = epics;
+            // Очистка панели эпиков
+            foreach(Transform child in EpicPanel.transform) Destroy(child.gameObject);
+        }));
+
+        // --- ШАГ 3: Сабтаски для Эпиков (Рекурсивно) ---
+        yield return StartCoroutine(LoadSubTasksRecursively(0));
+    }
+
+    IEnumerator LoadSubTasksRecursively(int index)
+    {
+        // Если прошли все эпики - финиш, включаем меню
+        if (index >= epicsByMaster.Count)
+        {
+            FinishLoading();
+            yield break;
+        }
+
+        Epic epic = epicsByMaster[index];
+        
+        // Загружаем сабтаски для текущего эпика
+        yield return StartCoroutine(db.GetSubTasksByEpicWeb(epic.id, Mscript.activeUserId, "Me", (subTasks) => 
+        {
+            epic.subTasks = subTasks;
+            
+            // Отрисовываем кнопку эпика
+            epic.PutInPanel(EpicPrefab, EpicPanel, true);
+            
+            int epicIndex = index;
+            epic.EpicButton.GetComponent<Button>().onClick.AddListener(() => ShowEpic(epicIndex));
+        }));
+
+        // Грузим следующий
+        StartCoroutine(LoadSubTasksRecursively(index + 1));
+    }
+
+    void FinishLoading()
+    {
+        // Выключаем все меню и включаем главное
+        SwitchMenu(activeMenuId); 
+    }
+
+    // --- ОТОБРАЖЕНИЕ ---
+
+    private void ShowTask(int listIndex)
+    {
+        Task t = tasksByMaster[listIndex];
+        TaskTitle.GetComponent<TMP_Text>().text = t.title;
+        WorkerName.GetComponent<TMP_Text>().text = "Исполнитель: " + t.workerName;
+        TaskDescription.GetComponent<TMP_Text>().text = t.description;
+        MasterTaskName.GetComponent<TMP_Text>().text = "Мастер: " + t.masterName;
+        TaskStatus.GetComponent<TMP_Text>().text = db.GetStatusById(t.statusId);
+
+        string colorCode = "#" + GetColorByStatusId(t.statusId);
+        if(ColorUtility.TryParseHtmlString(colorCode, out Color newColor))
+            TaskColor.GetComponent<Image>().color = newColor;
+
+        SwitchMenu(2); // Меню просмотра задачи
+    }
+
+    private void ShowEpic(int listIndex)
+    {
+        Epic e = epicsByMaster[listIndex];
+        activeEpicId = e.id;       // ID из базы для запросов
+        activeEpicListIndex = listIndex; // Индекс в локальном списке
+
+        EpicTitle.GetComponent<TMP_Text>().text = e.title;
+        EpicDescription.GetComponent<TMP_Text>().text = e.description;
+
+        // Очищаем панель сабтасков
+        foreach(Transform child in SubTaskPanel.transform) Destroy(child.gameObject);
+
+        // Отрисовываем сабтаски
+        for (int i = 0; i < e.subTasks.Count; i++)
+        {
+            string colorCode = GetColorByStatusId(e.subTasks[i].statusId);
+            e.subTasks[i].PutInPanel(TaskPrefab, SubTaskPanel, colorCode, true);
+        }
+
+        SwitchMenu(5); // Меню просмотра эпика
+    }
+
+    // --- ДОБАВЛЕНИЕ (CRUD) ---
+
+    public void AddTask()
+    {
+        if (string.IsNullOrEmpty(titleTask.text) || string.IsNullOrEmpty(descriptionTask.text)) return;
+        if (WorkerTaskDropDown.options.Count == 0) return;
+
+        string workerEmail = WorkerTaskDropDown.options[WorkerTaskDropDown.value].text;
+
+        // 1. Узнаем ID воркера
+        StartCoroutine(db.GetUserIdByEmailWeb(workerEmail, (workerId) => 
+        {
+            if (workerId > 0)
+            {
+                int masterId = Mscript.activeUserId;
+                
+                // 2. Отправляем задачу на сервер
+                StartCoroutine(db.AddTaskWeb(titleTask.text, descriptionTask.text, masterId, workerId, (newId) => 
+                {
+                    // 3. Обновляем UI локально (чтобы не перезагружать всё)
+                    Task task = new Task(newId, titleTask.text, db.GetStatusById(1), workerId, descriptionTask.text, 1, "Me", masterId); // workerName временно статус или заглушка, т.к. имени не знаем без доп запроса
+                    tasksByMaster.Add(task);
+                    
+                    task.PutInPanel(TaskPrefab, TaskPanel, GetColorByStatusId(1), true);
+                    int idx = tasksByMaster.Count - 1;
+                    task.TaskButton.GetComponent<Button>().onClick.AddListener(() => ShowTask(idx));
+
+                    // Очистка
+                    titleTask.text = ""; descriptionTask.text = ""; WorkerTaskDropDown.value = 0;
+                    SwitchMenu(1); // Возврат к списку задач
+                }));
+            }
+        }));
+    }
+
     public void AddEpic()
     {
-        bool inputProblem = false;
-        if (titleEpic.text == "")
-        {
-            titleEpic.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
-        }
-        if (descriptionEpic.text == "")
-        {
-            descriptionEpic.placeholder.GetComponent<TextMeshProUGUI>().text = "������� ��������!";
-            inputProblem = true;
-        }
-        //int workerId = db.GetUserIdByEmail(WorkerDropDown.options[WorkerDropDown.value].text);
-        if (!inputProblem)
-        {
-            int masterId =Mscript.activeUserId;
-            //Debug.Log("���");
-            db.AddEpic(titleEpic.text, descriptionEpic.text, masterId);//, workerId);
+        if (string.IsNullOrEmpty(titleEpic.text) || string.IsNullOrEmpty(descriptionEpic.text)) return;
 
+        int masterId = Mscript.activeUserId;
 
-            //passwordMenu.text = "";
-            int epicId = db.GetLastEpicId() ;
-            int userId=Mscript.activeUserId;
-            string chatName = "���-" + titleEpic.text;
-            Epic epic = new Epic(epicId, titleEpic.text,descriptionEpic.text, epicId, db.GetUserNameById(userId), userId,chatName,0);//(db.GetLastTaskId(), titleTask.text, db.GetNameById(workerId), workerId, descriptionTask.text, 1, db.GetNameById(masterId), masterId); ;
-            
+        StartCoroutine(db.AddEpicWeb(titleEpic.text, descriptionEpic.text, masterId, (newId) => 
+        {
+            Epic epic = new Epic(newId, titleEpic.text, descriptionEpic.text, 0, "Me", masterId, "Chat", 0);
+            epic.subTasks = new List<Task>();
             epicsByMaster.Add(epic);
-            epic.PutInPanel(EpicPrefab, EpicPanel, true);//(TaskPrefab, TaskPanel, db.statusColors[0], true);
 
-            //Debug.Log(tasksByMaster[tasksByMaster.Count - 1].Print());
-            //tasksByMaster[tasksByMaster.Count - 1].PutTaskInPanel(TaskPrefab, TaskPanel, db.statusColors[tasksByMaster[tasksByMaster.Count - 1].statusId - 1]);
-            UnityEngine.UI.Button button = epicsByMaster[epicsByMaster.Count - 1].EpicButton.GetComponent<UnityEngine.UI.Button>();
-            int epicIndex = tasksByMaster.Count - 1;
-            button.onClick.AddListener(() =>
-            {
-                ShowEpic(epicIndex);
-            });
+            epic.PutInPanel(EpicPrefab, EpicPanel, true);
+            int idx = epicsByMaster.Count - 1;
+            epic.EpicButton.GetComponent<Button>().onClick.AddListener(() => ShowEpic(idx));
 
-            titleEpic.text = "";
-            descriptionEpic.text = "";
-            //passwordMenu.text = "";
-
-        }
+            titleEpic.text = ""; descriptionEpic.text = "";
+            SwitchMenu(4); // Возврат к списку эпиков
+        }));
     }
-    //void LoadStat()
-    //{
-    //    int masterId = Mscript.activeUserId;
-    //    string answer = "";
-    //    List<string> tasks = db.AIGetTaskByMaster(masterId);
-    //    for (int i = 0; i < tasks.Count; i+=2)
-    //    {
-    //        answer += "������ " + tasks[i] + " ��������� " + tasks[i+1] +";\n";
-    //    }
-    //    List<string> epic = db.GetEpicByMaster(masterId);
-    //    for (int i = 0; i < epic.Count; i++)
-    //    {
-    //        answer += "���� " + epic[i] + ";\n";
-    //    }
-    //    //����� �� ������, ����� �� ������ � ���������� ���� � ���� master_id= masterId
-    //    stat.text = answer;
-    //}
+
+    public void AddSubTask()
+    {
+        if (string.IsNullOrEmpty(titleSubTask.text) || string.IsNullOrEmpty(descriptionSubTask.text)) return;
+        if (WorkerSubTaskDropDown.options.Count == 0) return;
+
+        string workerEmail = WorkerSubTaskDropDown.options[WorkerSubTaskDropDown.value].text;
+
+        StartCoroutine(db.GetUserIdByEmailWeb(workerEmail, (workerId) => 
+        {
+            if (workerId > 0)
+            {
+                // Используем сохраненный ID эпика
+                StartCoroutine(db.AddSubTaskWeb(titleSubTask.text, descriptionSubTask.text, activeEpicId, workerId, (newId) => 
+                {
+                    // Добавляем в локальный список текущего эпика
+                    Task sub = new Task(newId, titleSubTask.text, "Worker", workerId, descriptionSubTask.text, 1, "Me", Mscript.activeUserId);
+                    epicsByMaster[activeEpicListIndex].subTasks.Add(sub);
+
+                    // Отрисовываем
+                    sub.PutInPanel(TaskPrefab, SubTaskPanel, GetColorByStatusId(1), true);
+
+                    titleSubTask.text = ""; descriptionSubTask.text = ""; WorkerSubTaskDropDown.value = 0;
+                    SwitchMenu(5); // Возврат к просмотру эпика
+                }));
+            }
+        }));
+    }
+
+    // --- ВСПОМОГАТЕЛЬНЫЕ ---
+
     void LoadWorkers()
     {
-        WorkerTaskDropDown.ClearOptions();
-        WorkerSubTaskDropDown.ClearOptions();
-        List<string> workers=db.GetUserEmailsByRole(3);
-        workers.Insert(0,"�����������");
-        WorkerTaskDropDown.AddOptions(workers);
-        WorkerSubTaskDropDown.AddOptions(workers);
-        //Debug.Log("���������!");
+        StartCoroutine(db.GetWorkersEmailsWeb((emails) => 
+        {
+            WorkerTaskDropDown.ClearOptions();
+            WorkerSubTaskDropDown.ClearOptions();
+            
+            WorkerTaskDropDown.AddOptions(emails);
+            WorkerSubTaskDropDown.AddOptions(emails);
+        }));
     }
+
     public void OpenChat()
     {
-        SwitchMenu(9);
+        // 9 - это индекс меню чата в твоем массиве Menus
+        SwitchMenu(9); 
     }
+
+    public void Exit()
+    {
+        // Очистка списков кнопок перед выходом
+        foreach (var t in tasksByMaster) if(t.TaskButton) Destroy(t.TaskButton);
+        tasksByMaster.Clear();
+        
+        foreach (var e in epicsByMaster) {
+            if(e.EpicButton) Destroy(e.EpicButton);
+            if(e.subTasks != null) 
+                foreach(var s in e.subTasks) if(s.TaskButton) Destroy(s.TaskButton);
+        }
+        epicsByMaster.Clear();
+
+        Mscript.ChangeMenu(1); // Возврат на экран входа
+    }
+
+    // Универсальный переключатель меню
     public void SwitchMenu(int newActiveId)
     {
-        Menus[activeMenuId].SetActive(false);
-        Menus[newActiveId].SetActive(true);
-        activeMenuId = newActiveId;
+        if (Menus == null || Menus.Length == 0) return;
+
+        // Выключаем всё
+        foreach(var menu in Menus) if(menu != null) menu.SetActive(false);
+
+        // Включаем нужное
+        if (newActiveId >= 0 && newActiveId < Menus.Length && Menus[newActiveId] != null)
+        {
+            Menus[newActiveId].SetActive(true);
+            activeMenuId = newActiveId;
+        }
     }
-    //public void ChangeMenu(int newId)
-    //{
-    //    Debug.Log(activeMenuId + " --> " + newId);
-    //    switch (activeMenuId)
-    //    {
-    //        case 0:
-    //            MainMenu.SetActive(false);
-    //            break;
-    //        case 1:
-    //            CreateTaskMenu.SetActive(false);
-    //            break;
-    //        case 2:
-    //            CreateEpicMenu.SetActive(false);
-    //            break;
-    //        case 3:
-    //            StatisticMenu.SetActive(false);
-    //            break;
-    //    }
 
+    // Методы для кнопок навигации (назначай их в Unity Inspector)
+    public void OpenMainMenu() => SwitchMenu(0);
+    public void OpenTasksMenu() => SwitchMenu(1);
+    public void OpenEpicsMenu() => SwitchMenu(4);
+    public void OpenNewTaskMenu() => SwitchMenu(3);
+    public void OpenNewEpicMenu() => SwitchMenu(6);
+    public void OpenNewSubTaskMenu() => SwitchMenu(7);
 
-    //    switch (newId)
-    //    {
-    //        case 0:
-    //            MainMenu.SetActive(true);
-    //            break;
-    //        case 1:
-    //            CreateTaskMenu.SetActive(true);
-    //            break;
-    //        case 2:
-    //            CreateEpicMenu.SetActive(true);
-    //            break;
-    //        case 3:
-    //            LoadStat();
-    //            StatisticMenu.SetActive(true);
-    //            break;
-    //    }
-    //    activeMenuId = newId;
-    //}
+    // Безопасное получение цвета
+    string GetColorByStatusId(int id)
+    {
+        if (db.statusColors != null && id > 0 && id <= db.statusColors.Length)
+            return db.statusColors[id - 1];
+        return "FFFFFF";
+    }
 }

@@ -4091,7 +4091,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 143.85506, y: -23.18585}
+  m_AnchoredPosition: {x: 156.35506, y: -23.18585}
   m_SizeDelta: {x: 257.823, y: 36.3717}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &387483514
@@ -15823,7 +15823,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 143.85506, y: -137.92004}
+  m_AnchoredPosition: {x: 156.35506, y: -137.92004}
   m_SizeDelta: {x: 257.823, y: 178.4162}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1256792015
@@ -16264,7 +16264,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 143.85506, y: -305.555}
+  m_AnchoredPosition: {x: 156.35506, y: -305.555}
   m_SizeDelta: {x: 257.823, y: 36.3717}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1281576461
@@ -18361,7 +18361,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1442899016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18443,37 +18443,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0af05c37ea2e88428136d47f484fb54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Menus:
-  - {fileID: 1501389988}
-  - {fileID: 5264387}
-  - {fileID: 1091727822}
-  - {fileID: 730776715}
-  - {fileID: 1709531118}
-  - {fileID: 1565020443}
-  - {fileID: 325913648}
-  - {fileID: 203213358}
-  - {fileID: 1213701906}
+  Menus: []
   TaskPrefab: {fileID: 2563685853777306651, guid: 5aefe89259418774e89ab4462dfb23f4, type: 3}
   EpicPrefab: {fileID: 2563685853777306651, guid: 3693336f4b0e4ad4f9bb0ef7a2e32c84, type: 3}
-  TaskPanel: {fileID: 1005004029}
-  SubTaskPanel: {fileID: 240939615}
-  EpicPanel: {fileID: 620363636}
+  TaskPanel: {fileID: 0}
+  SubTaskPanel: {fileID: 0}
+  EpicPanel: {fileID: 0}
   Mscript: {fileID: 1985287605}
   stat: {fileID: 2077385098}
-  TaskTitle: {fileID: 226778423}
-  WorkerName: {fileID: 592748675}
-  TaskColor: {fileID: 157099857}
-  TaskStatus: {fileID: 1299841210}
-  TaskDescription: {fileID: 475733803}
-  MasterTaskName: {fileID: 1450122397}
-  EpicTitle: {fileID: 261630814}
-  EpicDescription: {fileID: 557891227}
+  TaskTitle: {fileID: 0}
+  WorkerName: {fileID: 0}
+  TaskColor: {fileID: 0}
+  TaskStatus: {fileID: 0}
+  TaskDescription: {fileID: 0}
+  MasterTaskName: {fileID: 0}
+  EpicTitle: {fileID: 0}
+  EpicDescription: {fileID: 0}
   titleTask: {fileID: 1519967694}
   descriptionTask: {fileID: 1600741029}
-  WorkerTaskDropDown: {fileID: 538095015}
-  titleSubTask: {fileID: 460505009}
-  descriptionSubTask: {fileID: 2127766084}
-  WorkerSubTaskDropDown: {fileID: 1476910795}
+  WorkerTaskDropDown: {fileID: 0}
+  titleSubTask: {fileID: 0}
+  descriptionSubTask: {fileID: 0}
+  WorkerSubTaskDropDown: {fileID: 0}
   titleEpic: {fileID: 117556331}
   descriptionEpic: {fileID: 1997988445}
 --- !u!1 &1443467021
@@ -19534,7 +19525,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1501389989
 RectTransform:
   m_ObjectHideFlags: 0
@@ -19557,7 +19548,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -30.3995}
+  m_AnchoredPosition: {x: 0, y: 46.399}
   m_SizeDelta: {x: -35.4059, y: -77.5712}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1501389990
@@ -19998,7 +19989,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1543343330
 RectTransform:
   m_ObjectHideFlags: 0
@@ -22968,7 +22959,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1774483088
 RectTransform:
   m_ObjectHideFlags: 0
@@ -24097,7 +24088,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 143.85506, y: -257.24863}
+  m_AnchoredPosition: {x: 156.35506, y: -257.24863}
   m_SizeDelta: {x: 257.823, y: 45.5605}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1868641362
@@ -25054,7 +25045,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1966297664
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25128,19 +25119,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f882a46ff912b984aa3a416967ee81db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Menus:
-  - {fileID: 1543343329}
-  - {fileID: 1722410822}
-  - {fileID: 1774483087}
-  TaskPanel: {fileID: 220762188}
+  Menus: []
+  TaskPanel: {fileID: 0}
   TaskPrefab: {fileID: 2563685853777306651, guid: 5aefe89259418774e89ab4462dfb23f4, type: 3}
   Mscript: {fileID: 1985287605}
-  TaskTitle: {fileID: 1081219108}
-  WorkerName: {fileID: 1899884219}
-  TaskColor: {fileID: 401381970}
-  StatusDropDown: {fileID: 1385972249}
-  TaskDescription: {fileID: 967060641}
-  MasterName: {fileID: 1474433732}
+  TaskTitle: {fileID: 0}
+  WorkerName: {fileID: 0}
+  TaskColor: {fileID: 0}
+  StatusDropDown: {fileID: 0}
+  TaskDescription: {fileID: 0}
+  MasterName: {fileID: 0}
 --- !u!1 &1969265864
 GameObject:
   m_ObjectHideFlags: 0
@@ -25392,7 +25380,7 @@ MonoBehaviour:
   MasterMenu: {fileID: 1442899015}
   WorkerMenu: {fileID: 1966297663}
   workerMenu: {fileID: 1966297667}
-  masterMenu: {fileID: 1442899019}
+  masterMenu: {fileID: 0}
   activeUserId: 0
   loginMenu: {fileID: 1195313601}
   passwordMenu: {fileID: 1077886182}
@@ -27194,7 +27182,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 95, y: -204.43661}
+  m_AnchoredPosition: {x: 94, y: -255}
   m_SizeDelta: {x: 117.7201, y: 36.6219}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2137382214

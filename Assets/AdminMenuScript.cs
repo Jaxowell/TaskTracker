@@ -13,31 +13,21 @@ public class AdminMenuScript : MonoBehaviour
 
     public void SignUp()
     {
-
         bool inputProblem = false;
-        if (loginMenu.text == "")
-        {
-            loginMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите логин!";
-            inputProblem = true;
-        }
-        if (passwordMenu.text == "")
-        {
-            passwordMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Введите пароль!";
-            inputProblem = true;
-        }
-        if (loginMenu.text == "")
-        {
-            emailMenu.placeholder.GetComponent<TextMeshProUGUI>().text = "Укажите почту!";
-            inputProblem = true;
-        }
-        int roleId = roleMenu.value+1;
+        if (string.IsNullOrEmpty(loginMenu.text)) inputProblem = true;
+        if (string.IsNullOrEmpty(passwordMenu.text)) inputProblem = true;
+        if (string.IsNullOrEmpty(emailMenu.text)) inputProblem = true;
+
+        int roleId = roleMenu.value + 1;
+
         if (!inputProblem)
         {
-            menuScript.db.AddUser(loginMenu.text, emailMenu.text, passwordMenu.text, roleId);
+            // РСЃРїРѕР»СЊР·СѓРµРј СЃРµС‚РµРІРѕР№ РјРµС‚РѕРґ
+            StartCoroutine(menuScript.db.AddUserWeb(loginMenu.text, emailMenu.text, passwordMenu.text, roleId));
+            
             loginMenu.text = "";
             emailMenu.text = "";
             passwordMenu.text = "";
-
         }
     }
 }
