@@ -255,9 +255,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 11500000, guid: 3ccba90be0d5f98409e8b00b3f0c9671, type: 3}
         m_TargetAssemblyTypeName: MasterMenuScript, Assembly-CSharp
-        m_MethodName: OpenMasterChat
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
